@@ -1,0 +1,1010 @@
+@page "/ambientes"
+@rendermode InteractiveServer
+@using PYBWeb.Domain.Entities
+@using PYBWeb.Domain.Interfaces
+@inject IAmbienteCicsService AmbienteCicsService
+@inject IAmbienteTodosService AmbienteTodosService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@using Microsoft.AspNetCore.Authorization
+@* ⚠️ DESABILITADO PARA TESTES - Descomentar em produção *@
+@attribute [Authorize(Policy = "RequireAdmin")]
+
+<PageTitle>Ambientes - PYB CICS</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 text-primary">
+                <i class="bi bi-server"></i> Ambientes CICS
+            </h1>
+        </div>
+        
+    </div>
+
+    <!-- Abas -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(abaAtiva == "cics" ? "active" : "")" @onclick='() => AlterarAba("cics")'>
+                <i class="bi bi-hdd-rack"></i> Ambientes CICS
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(abaAtiva == "todos" ? "active" : "")" @onclick='() => AlterarAba("todos")'>
+                <i class="bi bi-diagram-3"></i> Ambientes TODOS (PXU/PXS)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Conteúdo da Aba CICS -->
+    @if (abaAtiva == "cics")
+    {
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-md-2">
+            <label for="filtroNome" class="form-label">Buscar por Nome:</label>
+            <input id="filtroNome" type="text" class="form-control" placeholder="Digite o nome do ambiente..." @bind="filtroNome" @onkeyup="AplicarFiltros" />
+        </div>
+        <div class="col-md-2">
+            <label for="filtroMaquina" class="form-label">Máquina:</label>
+            <input id="filtroMaquina" type="text" class="form-control" placeholder="Digite a máquina..." @bind="filtroMaquina" @onkeyup="AplicarFiltros" />
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="mostrarInativos" @bind="mostrarInativos" @bind:after="AlternarMostrarInativos" />
+                <label class="form-check-label" for="mostrarInativos">
+                    Mostrar ambientes desativados
+                </label>
+            </div>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-success" @onclick="AbrirModalNovoAmbiente">Novo Ambiente</button>
+
+                @if (modalNovoAmbienteAberto)
+                {
+                    <div class="modal d-block" tabindex="-1" style="...">
+                        
+                        <button @onclick="SalvarNovoAmbiente">Salvar</button>
+                        <button @onclick="FecharModalNovoAmbiente">Cancelar</button>
+                    </div>
+                }
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-secondary w-100" @onclick="LimparFiltros">
+                <i class="bi bi-x-circle"></i> Limpar
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+        </div>
+    }
+    else 
+    {
+        @if (ambientesFiltrados?.Any() != true)
+        {
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> Nenhum ambiente encontrado com os filtros aplicados.
+                <br><small>Total de ambientes sem filtro: @todosAmbientes.Count()</small>
+            </div>
+        }
+        else
+        {
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th>Ambiente</th>
+                        <th>Máquina</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ambiente in ambientesFiltrados)
+                    {
+                        <tr class="@GetRowClass(ambiente)" style="cursor: pointer;" @onclick="() => SelecionarAmbiente(ambiente)">
+                            <td>
+                                <strong>@ambiente.Nome</strong>
+                                @if (!string.IsNullOrEmpty(ambiente.Sufixo))
+                                {
+                                    <small class="text-muted d-block">Sufixo: @ambiente.Sufixo</small>
+                                }
+                            </td>
+                            <td>@ambiente.Descricao</td>
+                            <td>
+                                <span class="badge bg-info">@ambiente.Ambiente</span>
+                            </td>
+                            <td>@ambiente.Maquina</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(ambiente.Ativo)">
+                                    @(ambiente.Ativo ? "Ativo" : "Inativo")
+                                </span>
+                            </td>
+                        </tr>
+                        
+                  
+                        @if (ambienteSelecionado?.Id == ambiente.Id)
+                        {
+                            <tr class="table-info">
+                                <td colspan="7">
+                                    <div class="card border-0">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="bi bi-info-circle"></i> Detalhes do Ambiente @ambiente.Nome
+                                            </h6>
+                                            
+                                          
+                                            <div class="row mb-3">
+
+                                                <div class="col-md-2">
+                                                    <strong>ISC:</strong>
+                                                    @ambiente.Isc
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <strong>Steplib CSD:</strong><br>
+                                                    @ambiente.SteplibCsd
+                                                </div>
+                                               
+                                                @if (!string.IsNullOrEmpty(ambiente.DsnameDfhcsd))
+                                                {
+                                                    
+                                                        <div class="col-md-4">
+                                                            <strong>DSName DFHCSD:</strong><br>
+                                                            <code>@ambiente.DsnameDfhcsd</code>
+                                                        </div>
+                                                    
+                                                }
+                                            </div>
+
+                                            <hr />
+                                            
+                                          
+                                            <div class="mt-3">
+
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <button class="btn btn-primary" @onclick="() => AbrirModalEdicao(ambiente)" @onclick:stopPropagation="true">
+                                                        <i class="bi bi-pencil"></i> Editar
+                                                    </button>
+
+                                                    @if (ambiente.Ativo)
+                                                    {
+                                                        <button class="btn btn-warning" @onclick="() => DesativarAmbiente(ambiente.Id)" @onclick:stopPropagation="true">
+                                                            <i class="bi bi-pause-circle"></i> Desativar
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="btn btn-success" @onclick="() => AtivarAmbiente(ambiente.Id)" @onclick:stopPropagation="true">
+                                                            <i class="bi bi-play-circle"></i> Ativar
+                                                        </button>
+                                                    }
+                                                    <button class="btn btn-secondary" @onclick="LimparSelecao" @onclick:stopPropagation="true">
+                                                        <i class="bi bi-x-circle"></i> Fechar
+                                                    </button>
+                                                    <button class="btn btn-danger"
+                                                            @onclick="() => ExcluirAmbiente(ambiente.Id)"
+                                                            @onclick:stopPropagation="true">
+                                                        <i class="bi bi-trash"></i> Excluir
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <small class="text-muted">
+                    Mostrando @ambientesFiltrados.Count() de @todosAmbientes.Count() ambientes
+                </small>
+            </div>
+        </div>
+        } 
+    } 
+    }
+
+    <!-- Conteúdo da Aba TODOS -->
+    @if (abaAtiva == "todos")
+    {
+        
+    <button class="btn btn-success" style="margin: 10px;" @onclick="AbrirModalNovoAmbienteTodos">Novo Ambiente (PXU/PXS)</button>
+
+        @if (modalNovoAmbienteTodosAberto)
+        {
+            <div class="modal d-block" tabindex="-1" style="...">
+                <!-- Formulário com campos de AmbienteTodos -->
+                <button @onclick="SalvarNovoAmbienteTodos">Salvar</button>
+                <button @onclick="FecharModalNovoAmbienteTodos">Cancelar</button>
+            </div>
+        }
+
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nome do Ambiente</th>
+                        <th>AMBIENTE (PXU/PXS)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ambientesTodosLista?.Any() == true)
+                    {
+                        @foreach (var ambiente in ambientesTodosLista)
+                        {
+                            <tr>
+                                <td><strong>@ambiente.Nome</strong></td>
+                                <td>
+                                    <span class="badge @(ambiente.Ativo ? "bg-success" : "bg-secondary")">
+                                        @(ambiente.Ativo ? "Sim" : "Não")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-primary" @onclick="() => AbrirModalEdicaoTodos(ambiente)">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                        @if (ambiente.Ativo)
+                                        {
+                                            <button class="btn btn-sm btn-warning" @onclick="() => AlterarStatusTodos(ambiente.Id, 0)">
+                                                <i class="bi bi-x-circle"></i> Remover
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-success" @onclick="() => AlterarStatusTodos(ambiente.Id, 1)">
+                                                <i class="bi bi-check-circle"></i> Adicionar
+                                            </button>
+                                        }
+                                        
+                                            <button class="btn btn-sm btn-danger" @onclick="() => ExcluirAmbienteTodos(ambiente.Id)">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </button>
+                                        
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                <i class="bi bi-inbox"></i> Nenhum ambiente encontrado
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <small class="text-muted">
+                    Total de ambientes: @(ambientesTodosLista?.Count ?? 0)
+                </small>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal de Edição -->
+@if (ambienteEmEdicao != null)
+{
+
+   <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i> Editar Ambiente - @ambienteEmEdicao.Nome
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModalEdicao"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">ID Chave</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.IdChave" disabled />
+                            <small class="text-muted">Campo não editável</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome *</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Nome" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição *</label>
+                        <input type="text" class="form-control" @bind="ambienteEmEdicao.Descricao" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Ambiente</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Ambiente" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Máquina</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Maquina" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Sufixo</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Sufixo" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">ISC</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Isc" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Steplib CSD</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.SteplibCsd" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">DSName DFHCSD</label>
+                        <input type="text" class="form-control" @bind="ambienteEmEdicao.DsnameDfhcsd" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Servidor</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Servidor" placeholder="Ex: servidor.dominio.com" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Porta</label>
+                            <input type="text" class="form-control" @bind="ambienteEmEdicao.Porta" placeholder="Ex: 8080" />
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" @bind="ambienteEmEdicao.Ativo" id="checkAtivo" />
+                        <label class="form-check-label" for="checkAtivo">
+                            Ambiente Ativo
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FecharModalEdicao">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="SalvarEdicao">
+                        <i class="bi bi-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de Edição TODOS -->
+@if (ambienteTodosEmEdicao != null)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i> Editar Ambiente (PXU/PXS)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModalEdicaoTodos"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Ambiente</label>
+                        <input type="text" class="form-control" @bind="ambienteTodosEmEdicao.Nome" disabled />
+                        <small class="text-muted">Campo não editável</small>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="switchEmTodos" 
+                               checked="@(ambienteTodosEmEdicao.Em_Todos == 1)"
+                               @onchange="(e) => ambienteTodosEmEdicao.Em_Todos = (bool)e.Value! ? 1 : 0" />
+                        <label class="form-check-label" for="switchEmTodos">
+                            <strong>Incluir em (PXU/PXS)</strong>
+                        </label>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i> 
+                        Quando ativado, este ambiente será incluído nas operações de (PXU/PXS).
+                    </small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FecharModalEdicaoTodos">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="SalvarEdicaoTodos">
+                        <i class="bi bi-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (modalNovoAmbienteAberto)
+        {
+            <div class="modal d-block" tabindex="-1" style="background-color:rgba(0,0,0,0.5)">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Adicionar Ambiente CICS</h5>
+                            <button type="button" class="btn-close btn-close-white" @onclick="FecharModalNovoAmbiente"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label>Nome *</label>
+                                    <input class="form-control" @bind="novoAmbiente.Nome" @oninput="AtualizaIscAutomatico" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label>ID Chave</label>
+                                    <input class="form-control" @bind="novoAmbiente.IdChave" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Descrição *</label>
+                                <input class="form-control" @bind="novoAmbiente.Descricao" required />
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label>Ambiente</label>
+                                    <input class="form-control" @bind="novoAmbiente.Ambiente" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Máquina</label>
+                                    <input class="form-control" @bind="novoAmbiente.Maquina" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Sufixo</label>
+                                    <input class="form-control" @bind="novoAmbiente.Sufixo" />
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label>ISC</label>
+                                    <input class="form-control" @bind="novoAmbiente.Isc" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Steplib CSD</label>
+                                    <input class="form-control" @bind="novoAmbiente.SteplibCsd" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>DSName DFHCSD</label>
+                                <input class="form-control" @bind="novoAmbiente.DsnameDfhcsd" />
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label>Servidor</label>
+                                    <input class="form-control" @bind="novoAmbiente.Servidor" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Porta</label>
+                                    <input class="form-control" @bind="novoAmbiente.Porta" />
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="FecharModalNovoAmbiente">
+                                Cancelar</button>
+                            <button type="button" class="btn btn-success" @onclick="SalvarNovoAmbiente">
+                                Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+@if (modalNovoAmbienteTodosAberto)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:10000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Novo Ambiente (PXU/PXS)</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FecharModalNovoAmbienteTodos"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Nome do Ambiente *</label>
+                        <input class="form-control" @bind="novoAmbienteTodos.Nome" required />
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" @bind="isNovoEmTodos" id="checkNovoTodos" />
+                        <label class="form-check-label" for="checkNovoTodos">(PXU/PXS)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FecharModalNovoAmbienteTodos">Cancelar</button>
+                    <button type="button" class="btn btn-success" @onclick="SalvarNovoAmbienteTodos">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    private async Task ExcluirAmbiente(int id)
+    {
+        // Alerta simples de confirmação (opcional, pode fazer melhor depois)
+        if (!await JS.InvokeAsync<bool>("confirm", $"Deseja excluir o ambiente {id}?"))
+            return;
+
+        var sucesso = await AmbienteCicsService.ExcluirAmbienteAsync(id);
+        if (sucesso)
+        {
+            await CarregarAmbientes();
+            LimparSelecao(); // se quiser fechar detalhes após exclusão
+        }
+        // Mensagem de erro se necessário
+    }
+
+    // Variáveis de controle modais
+    private bool modalNovoAmbienteAberto = false;
+    private bool modalNovoAmbienteTodosAberto = false;
+
+    private AmbienteCics novoAmbiente = new AmbienteCics
+    {
+        Ativo = true
+    };
+
+    private AmbienteTodos novoAmbienteTodos = new AmbienteTodos
+    {
+        Em_Todos = 1
+    };
+
+
+    private void AtualizaIscAutomatico(ChangeEventArgs e)
+    {
+        novoAmbiente.Nome = e.Value?.ToString() ?? "";
+        novoAmbiente.Isc = novoAmbiente.Nome.Length > 0
+            ? "ISC" + novoAmbiente.Nome.Last()
+            : "ISC";
+    }
+
+    private void AbrirModalNovoAmbiente()
+    {
+        novoAmbiente = new AmbienteCics { Ativo = true };
+        modalNovoAmbienteAberto = true;
+        novoAmbiente = new AmbienteCics
+        {
+            Ativo = true,
+            Nome = "",
+            Isc = ""
+        };
+    modalNovoAmbienteAberto = true;
+    }
+    private void FecharModalNovoAmbiente()
+    {
+        modalNovoAmbienteAberto = false;
+    }
+
+    private async Task SalvarNovoAmbiente()
+    {
+        if(string.IsNullOrWhiteSpace(novoAmbiente.Nome) || string.IsNullOrWhiteSpace(novoAmbiente.Descricao))
+        {
+            // Feedback obrigatoriedade
+            return;
+        }
+        var sucesso = await AmbienteCicsService.CriarAmbienteAsync(novoAmbiente);
+        if (sucesso)
+        {
+            FecharModalNovoAmbiente();
+            await CarregarAmbientes();
+        }
+        // feedback erro se quiser
+    }
+
+
+
+    private bool isNovoEmTodos = true;
+
+    private void AbrirModalNovoAmbienteTodos()
+    {
+        novoAmbienteTodos = new AmbienteTodos();
+        isNovoEmTodos = true;
+        modalNovoAmbienteTodosAberto = true;
+    }
+
+    private void FecharModalNovoAmbienteTodos()
+    {
+        modalNovoAmbienteTodosAberto = false;
+    }
+
+    // Atualiza Em_Todos de acordo com checkbox
+    private async Task SalvarNovoAmbienteTodos()
+    {
+        if (string.IsNullOrWhiteSpace(novoAmbienteTodos.Nome))
+        {
+            // Mensagem de erro ou feedback
+            return;
+        }
+        novoAmbienteTodos.Em_Todos = isNovoEmTodos ? 1 : 0;
+
+        var sucesso = await AmbienteTodosService.CriarAmbienteTodosAsync(novoAmbienteTodos);
+        if (sucesso)
+        {
+            FecharModalNovoAmbienteTodos();
+            await CarregarAmbientesTodos();
+        }
+        // Mensagem de erro se necessário
+    }
+
+
+    private bool isLoading = true;
+    private string abaAtiva = "cics";
+    
+    // Ambientes CICS
+    private IEnumerable<AmbienteCics> todosAmbientes = new List<AmbienteCics>();
+    private IEnumerable<AmbienteCics> ambientesFiltrados = new List<AmbienteCics>();
+    private AmbienteCics? ambienteSelecionado = null;
+    private AmbienteCics? ambienteEmEdicao = null;
+    private bool mostrarInativos = false;
+    
+    // Ambientes TODOS
+    private List<AmbienteTodos> ambientesTodosLista = new List<AmbienteTodos>();
+    private AmbienteTodos? ambienteTodosEmEdicao = null;
+
+    private string filtroNome = "";
+    private string filtroMaquina = "";
+    private string filtroServidor = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        await CarregarAmbientes();
+        await CarregarAmbientesTodos();
+    }
+
+    private void AlterarAba(string aba)
+    {
+        abaAtiva = aba;
+        StateHasChanged();
+    }
+
+    private async Task CarregarAmbientesTodos()
+    {
+        try
+        {
+            ambientesTodosLista = await AmbienteTodosService.ObterTodosAmbientesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar ambientes TODOS: {ex.Message}");
+            ambientesTodosLista = new List<AmbienteTodos>();
+        }
+    }
+
+    private async Task CarregarAmbientes()
+    {
+        isLoading = true;
+        try
+        {
+            if (mostrarInativos)
+            {
+                todosAmbientes = await AmbienteCicsService.ObterTodosAmbientesAsync();
+            }
+            else
+            {
+                todosAmbientes = await AmbienteCicsService.ObterAmbientesAtivosAsync();
+            }
+            AplicarFiltros();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar ambientes: {ex.Message}");
+            todosAmbientes = new List<AmbienteCics>();
+            ambientesFiltrados = new List<AmbienteCics>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AlternarMostrarInativos()
+    {
+        await CarregarAmbientes();
+    }
+
+    private void SelecionarAmbiente(AmbienteCics ambiente)
+    {
+        if (ambienteSelecionado?.Id == ambiente.Id)
+        {
+            // Se clicar no mesmo ambiente, desmarca (toggle)
+            ambienteSelecionado = null;
+        }
+        else
+        {
+            // Seleciona o novo ambiente
+            ambienteSelecionado = ambiente;
+        }
+        StateHasChanged();
+    }
+
+    private void LimparSelecao()
+    {
+        ambienteSelecionado = null;
+        StateHasChanged();
+    }
+
+    private void AplicarFiltros()
+    {
+        ambientesFiltrados = todosAmbientes;
+
+        // Filtro por nome
+        if (!string.IsNullOrEmpty(filtroNome))
+        {
+            var nomeUpper = filtroNome.ToUpper();
+            ambientesFiltrados = ambientesFiltrados.Where(a =>
+                a.Nome.ToUpper().Contains(nomeUpper) ||
+                a.Descricao.ToUpper().Contains(nomeUpper)
+            );
+        }
+
+        // Filtro por máquina
+        if (!string.IsNullOrEmpty(filtroMaquina))
+        {
+            var maquinaUpper = filtroMaquina.ToUpper();
+            ambientesFiltrados = ambientesFiltrados.Where(a =>
+                a.Maquina.ToUpper().Contains(maquinaUpper)
+            );
+        }
+
+        // Filtro por servidor
+        if (!string.IsNullOrEmpty(filtroServidor))
+        {
+            var servidorUpper = filtroServidor.ToUpper();
+            ambientesFiltrados = ambientesFiltrados.Where(a =>
+                a.Servidor.ToUpper().Contains(servidorUpper)
+            );
+        }
+
+        ambientesFiltrados = ambientesFiltrados.OrderBy(a => a.Nome);
+        
+        // Se o ambiente selecionado não está mais na lista filtrada, limpa a seleção
+        if (ambienteSelecionado != null && !ambientesFiltrados.Any(a => a.Id == ambienteSelecionado.Id))
+        {
+            ambienteSelecionado = null;
+        }
+        
+        StateHasChanged();
+    }
+
+    private void LimparFiltros()
+    {
+        filtroNome = "";
+        filtroMaquina = "";
+        filtroServidor = "";
+        AplicarFiltros();
+    }
+
+    private void AbrirModalEdicao(AmbienteCics ambiente)
+    {
+        // Criar uma cópia do ambiente para edição
+        ambienteEmEdicao = new AmbienteCics
+        {
+            Id = ambiente.Id,
+            IdChave = ambiente.IdChave,
+            Nome = ambiente.Nome,
+            Descricao = ambiente.Descricao,
+            Ambiente = ambiente.Ambiente,
+            Maquina = ambiente.Maquina,
+            Sufixo = ambiente.Sufixo,
+            Isc = ambiente.Isc,
+            SteplibCsd = ambiente.SteplibCsd,
+            DsnameDfhcsd = ambiente.DsnameDfhcsd,
+            Servidor = ambiente.Servidor,
+            Porta = ambiente.Porta,
+            Ativo = ambiente.Ativo
+        };
+        StateHasChanged();
+    }
+
+    private void FecharModalEdicao()
+    {
+        ambienteEmEdicao = null;
+        StateHasChanged();
+    }
+
+    private async Task SalvarEdicao()
+    {
+        if (ambienteEmEdicao == null) return;
+
+        // Validação básica
+        if (string.IsNullOrWhiteSpace(ambienteEmEdicao.Nome))
+        {
+            Console.WriteLine("Nome é obrigatório");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(ambienteEmEdicao.Descricao))
+        {
+            Console.WriteLine("Descrição é obrigatória");
+            return;
+        }
+
+        var sucesso = await AmbienteCicsService.AtualizarAmbienteAsync(ambienteEmEdicao);
+        
+        if (sucesso)
+        {
+            Console.WriteLine($"Ambiente {ambienteEmEdicao.Nome} atualizado com sucesso");
+            FecharModalEdicao();
+            await CarregarAmbientes();
+        }
+        else
+        {
+            Console.WriteLine("Erro ao atualizar ambiente");
+        }
+    }
+
+    private void EditarAmbiente(int id)
+    {
+        Navigation.NavigateTo($"/ambientes/{id}/editar");
+    }
+
+    private async Task TestarConexao(AmbienteCics ambiente)
+    {
+        Console.WriteLine($"Testando conexão com {ambiente.Nome} em {ambiente.Servidor}:{ambiente.Porta}");
+
+        using var httpClient = new HttpClient();
+        try
+        {
+            var response = await httpClient.GetAsync($"http://{ambiente.Servidor}:{ambiente.Porta}/status");
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Conexão bem-sucedida.");
+            }
+            else
+            {
+                Console.WriteLine("Falha na conexão.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao testar conexão: {ex.Message}");
+        }
+    }
+
+    private async Task AtivarAmbiente(int id)
+    {
+        var sucesso = await AmbienteCicsService.AlterarStatusAmbienteAsync(id, true);
+        if (sucesso)
+        {
+            Console.WriteLine($"Ambiente {id} ativado com sucesso");
+            await CarregarAmbientes();
+        }
+        else
+        {
+            Console.WriteLine($"Erro ao ativar ambiente {id}");
+        }
+    }
+
+    private async Task DesativarAmbiente(int id)
+    {
+        var sucesso = await AmbienteCicsService.AlterarStatusAmbienteAsync(id, false);
+        if (sucesso)
+        {
+            Console.WriteLine($"Ambiente {id} desativado com sucesso");
+            await CarregarAmbientes();
+        }
+        else
+        {
+            Console.WriteLine($"Erro ao desativar ambiente {id}");
+        }
+    }
+
+    private string GetRowClass(AmbienteCics ambiente)
+    {
+        var classes = new List<string>();
+        
+        // Adiciona classe para linha selecionada
+        if (ambienteSelecionado?.Id == ambiente.Id)
+        {
+            classes.Add("table-primary");
+        }
+        
+        // Adiciona classe para ambiente inativo
+        if (!ambiente.Ativo)
+        {
+            classes.Add("table-secondary");
+        }
+        
+        return string.Join(" ", classes);
+    }
+
+    private string GetStatusBadgeClass(bool ativo)
+    {
+        return ativo ? "bg-success" : "bg-secondary";
+    }
+
+    // ==================== Métodos para Ambientes TODOS ====================
+    
+    private void AbrirModalEdicaoTodos(AmbienteTodos ambiente)
+    {
+        ambienteTodosEmEdicao = new AmbienteTodos
+        {
+            Id = ambiente.Id,
+            Nome = ambiente.Nome,
+            Em_Todos = ambiente.Em_Todos
+        };
+        StateHasChanged();
+    }
+
+    private void FecharModalEdicaoTodos()
+    {
+        ambienteTodosEmEdicao = null;
+        StateHasChanged();
+    }
+
+    private async Task SalvarEdicaoTodos()
+    {
+        if (ambienteTodosEmEdicao == null) return;
+
+        var sucesso = await AmbienteTodosService.AtualizarAmbienteAsync(ambienteTodosEmEdicao);
+        
+        if (sucesso)
+        {
+            Console.WriteLine($"Ambiente TODOS {ambienteTodosEmEdicao.Nome} atualizado com sucesso");
+            FecharModalEdicaoTodos();
+            await CarregarAmbientesTodos();
+        }
+        else
+        {
+            Console.WriteLine("Erro ao atualizar ambiente TODOS");
+        }
+    }
+
+    
+
+    private async Task AlterarStatusTodos(int id, int emTodos)
+    {
+        var sucesso = await AmbienteTodosService.AlterarStatusAsync(id, emTodos);
+        
+        if (sucesso)
+        {
+            Console.WriteLine($"Status do ambiente TODOS alterado com sucesso");
+            await CarregarAmbientesTodos();
+        }
+        else
+        {
+            Console.WriteLine("Erro ao alterar status do ambiente TODOS");
+        }
+    }
+
+    private async Task ExcluirAmbienteTodos(int id)
+    {
+        var sucesso = await AmbienteTodosService.ExcluirAmbienteTodosAsync(id);
+        if (sucesso)
+        {
+            // Atualiza lista se quiser
+            await CarregarAmbientesTodos();
+        }
+        // Se quiser, mostra mensagem de erro/sucesso  
+    }
+
+}
