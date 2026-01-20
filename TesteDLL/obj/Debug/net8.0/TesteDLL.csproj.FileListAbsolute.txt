@@ -1,0 +1,15 @@
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\bin\Debug\net8.0\TesteDLL.exe
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\bin\Debug\net8.0\pxuotrxw.dll
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\bin\Debug\net8.0\TesteDLL.deps.json
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\bin\Debug\net8.0\TesteDLL.runtimeconfig.json
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\bin\Debug\net8.0\TesteDLL.dll
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\bin\Debug\net8.0\TesteDLL.pdb
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.AssemblyInfoInputs.cache
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.AssemblyInfo.cs
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.csproj.CoreCompileInputs.cache
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.dll
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\refint\TesteDLL.dll
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.pdb
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\TesteDLL.genruntimeconfig.cache
+C:\Users\E38235\Documents\PYB-CICS-Efetivacoes\TesteDLL\obj\Debug\net8.0\ref\TesteDLL.dll
