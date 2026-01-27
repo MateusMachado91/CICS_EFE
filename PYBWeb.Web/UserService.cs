@@ -62,7 +62,8 @@ public class UserService : ICurrentUserService
                 {
                     if (_authenticationStateProvider != null)
                     {
-                        var authState = _authenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult();
+                        // Evita deadlock em Blazor Server obtendo o AuthenticationState em thread-pool
+                        var authState = Task.Run(() => _authenticationStateProvider.GetAuthenticationStateAsync()).GetAwaiter().GetResult();
                         var user = authState?.User;
                         Console.WriteLine($"[DEBUG] AuthenticationState.User.Identity.IsAuthenticated: {user?.Identity?.IsAuthenticated}");
                         Console.WriteLine($"[DEBUG] AuthenticationState.User.Identity.Name: '{user?.Identity?.Name}'");
