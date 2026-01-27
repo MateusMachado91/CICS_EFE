@@ -6,6 +6,7 @@
 @using PYBWeb.Infrastructure.Services
 @using System.Text
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using PYBWeb.Infrastructure.Mainframe
 @inject IAmbienteCicsService AmbienteCicsService
 @inject IAmbienteTodosService AmbienteTodosService
@@ -16,6 +17,8 @@
 @inject IJclGeneratorService JclGenerator
 @inject ICurrentUserService CurrentUserService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+[CascadingParameter]
+private Task<AuthenticationState>? authenticationStateTask { get; set; }
 @rendermode InteractiveServer
 
 @attribute [Authorize(Policy = "RequireAdmin")]
@@ -603,20 +606,31 @@
         {
             solicitacao.DataEfetivacao = DateTime.Now;
 
-            // Obter usuário autenticado do AuthenticationStateProvider no momento da ação
+            // Obter usuário autenticado — preferir CascadingParameter se disponível
             string usuarioEfetivacao = string.Empty;
             try
             {
-                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                AuthenticationState? authState = null;
+                if (authenticationStateTask != null)
+                {
+                    authState = await authenticationStateTask;
+                }
+                else if (AuthenticationStateProvider != null)
+                {
+                    authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                }
+
                 var user = authState?.User;
-                var name = user?.Identity?.Name ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Upn)?.Value
+                var rawName = user?.Identity?.Name ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Upn)?.Value
                            ?? user?.FindFirst("preferred_username")?.Value ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
 
-                if (!string.IsNullOrWhiteSpace(name))
+                Console.WriteLine($"[Home] Raw auth name: '{rawName}'");
+
+                if (!string.IsNullOrWhiteSpace(rawName))
                 {
-                    if (name.Contains('\\')) usuarioEfetivacao = name.Split('\\', 2)[1];
-                    else if (name.Contains('@')) usuarioEfetivacao = name.Split('@', 2)[0];
-                    else usuarioEfetivacao = name;
+                    if (rawName.Contains('\\')) usuarioEfetivacao = rawName.Split('\\', 2)[1];
+                    else if (rawName.Contains('@')) usuarioEfetivacao = rawName.Split('@', 2)[0];
+                    else usuarioEfetivacao = rawName;
                 }
             }
             catch (Exception ex)
