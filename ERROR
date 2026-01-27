@@ -1,3 +1,12 @@
-An unhandled exception occurred while processing the request.
-InvalidOperationException: Cannot provide a value for property 'UserService' on type 'PYBWeb.Web.Components.Layout.MainLayout'. There is no registered service of type 'UserService'.
-Microsoft.AspNetCore.Components.ComponentFactory+<>c__DisplayClass9_0.<CreatePropertyInjector>g__Initialize|1(IServiceProvider serviceProvider, IComponent component)
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint '/logs (/logs)'
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: True
+[DEBUG] HttpContext.User.Identity.Name: 'CORP\E38235'
+[DEBUG] Identity.Name: 'CORP\E38235'
+[DEBUG] Valor final de userName: 'CORP\E38235'
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@__matricula_0='?' (Size = 6)], CommandType='Text', CommandTimeout='30']
+      SELECT "c"."Matricula", "c"."Email", "c"."Nome", "c"."Role", "c"."Setor"
+      FROM "Colaboradores" AS "c"
+      WHERE "c"."Matricula" = @__matricula_0
+      LIMIT 1
