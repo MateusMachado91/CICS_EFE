@@ -125,6 +125,8 @@ namespace PYBWeb.Infrastructure.Services
         {
             try
             {
+                Console.WriteLine($"[LogService DEBUG] CurrentUser: '{_currentUserService.UserName}' | SemDominio: '{_currentUserService.UserNameSemDominio}'");
+
                 var log = new LogModificacao
                 {
                     DataHora = DateTime.Now,
