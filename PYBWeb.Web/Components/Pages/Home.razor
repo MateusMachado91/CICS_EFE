@@ -15,6 +15,7 @@
 @inject IJSRuntime JSRuntime
 @inject IJclGeneratorService JclGenerator
 @inject ICurrentUserService CurrentUserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
 @attribute [Authorize(Policy = "RequireAdmin")]
@@ -601,8 +602,30 @@
         if (novoStatus == "Implementada" || novoStatus == "Rejeitada")
         {
             solicitacao.DataEfetivacao = DateTime.Now;
-            Console.WriteLine($"[Home] CurrentUser: '{CurrentUserService.UserName}' | SemDominio: '{CurrentUserService.UserNameSemDominio}'");
-            solicitacao.ResponsavelEfetivacao = CurrentUserService.UserNameSemDominio;
+
+            // Obter usuário autenticado do AuthenticationStateProvider no momento da ação
+            string usuarioEfetivacao = string.Empty;
+            try
+            {
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var user = authState?.User;
+                var name = user?.Identity?.Name ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Upn)?.Value
+                           ?? user?.FindFirst("preferred_username")?.Value ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    if (name.Contains('\\')) usuarioEfetivacao = name.Split('\\', 2)[1];
+                    else if (name.Contains('@')) usuarioEfetivacao = name.Split('@', 2)[0];
+                    else usuarioEfetivacao = name;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Home] Erro ao obter AuthenticationState: {ex.Message}");
+            }
+
+            Console.WriteLine($"[Home] CurrentUser (resolved at action time): '{usuarioEfetivacao}'");
+            solicitacao.ResponsavelEfetivacao = usuarioEfetivacao;
         }
         
         await SolicitacoesCics2025Service.AtualizarSolicitacaoAsync(solicitacao);
@@ -614,7 +637,8 @@
             registroIdentificador: solicitacao.NumeroSolicitacao,
             detalhes: detalhes,
             statusAnterior: statusAnterior,
-            statusNovo: novoStatus
+            statusNovo: novoStatus,
+            usuario: solicitacao.ResponsavelEfetivacao
         );
     }
 
