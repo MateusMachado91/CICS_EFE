@@ -1,9 +1,99 @@
-C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\Services\ColaboradorService.cs(42,27): error CS1061: ‘ILogService’ não contém uma definição para "RegistrarColabora 
-dorAsync" e não foi possível encontrar nenhum método de extensão "RegistrarColaboradorAsync" que aceite um primeiro argumento do tipo ‘ILogService’ (você está se esquecendo de usar um 
-a diretiva ou uma referência de assembly?) [C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\PYBWeb.Infrastructure.csproj]
-C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\Services\ColaboradorService.cs(66,27): error CS1061: ‘ILogService’ não contém uma definição para "RegistrarColabora 
-dorAsync" e não foi possível encontrar nenhum método de extensão "RegistrarColaboradorAsync" que aceite um primeiro argumento do tipo ‘ILogService’ (você está se esquecendo de usar um 
-a diretiva ou uma referência de assembly?) [C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\PYBWeb.Infrastructure.csproj]
-C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\Services\ColaboradorService.cs(80,31): error CS1061: ‘ILogService’ não contém uma definição para "RegistrarColabora 
-dorAsync" e não foi possível encontrar nenhum método de extensão "RegistrarColaboradorAsync" que aceite um primeiro argumento do tipo ‘ILogService’ (você está se esquecendo de usar um 
-a diretiva ou uma referência de assembly?) [C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\PYBWeb.Infrastructure.csproj]
+╔════════════════════════════════════════════════════════════╗
+║           🔧 MODO DEBUG - MAINFRAME DESABILITADO          ║
+╠════════════════════════════════════════════════════════════╣
+║ Arquivo JCL: A7133048.jcl                               ║
+║ Solicitações:  1                                        ║
+║ ✅ JCL gerado e salvo com sucesso!                         ║
+╚════════════════════════════════════════════════════════════╝
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[Home] CurrentUser: '' | SemDominio: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      Solicitação atualizada com sucesso: 24
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[LogService DEBUG] CurrentUser: '' | SemDominio: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@p0='?' (Size = 12), @p1='?' (DbType = DateTime), @p2='?' (Size = 65), @p3='?' (DbType = Int32), @p4='?' (Size = 12), @p5='?' (Size = 10), @p6='?' (Size = 12), @p7='?' (Size = 19), @p8='?'], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Logs" ("Acao", "DataHora", "Detalhes", "RegistroId", "RegistroIdentificador", "StatusAnterior", "StatusNovo", "Tabela", "Usuario")
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8)
+      RETURNING "Id";
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[Home] CurrentUser: '' | SemDominio: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      Solicitação atualizada com sucesso: 25
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+[LogService DEBUG] CurrentUser: '' | SemDominio: ''
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado no HttpContext.
+[DEBUG] Valor final de userName: ''
+
+
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint '/logs (/logs)'
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: True
+[DEBUG] HttpContext.User.Identity.Name: 'CORP\E38235'
+[DEBUG] Identity.Name: 'CORP\E38235'
+[DEBUG] Valor final de userName: 'CORP\E38235'
+
+
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint '/historico (/historico)'
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: True
+[DEBUG] HttpContext.User.Identity.Name: 'CORP\E38235'
+[DEBUG] Identity.Name: 'CORP\E38235'
+[DEBUG] Valor final de userName: 'CORP\E38235'
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__matricula_0='?' (Size = 6)], CommandType='Text', CommandTimeout='30']
+      SELECT "c"."Matricula", "c"."Email", "c"."Nome", "c"."Role", "c"."Setor"
+      FROM "Colaboradores" AS "c"
+      WHERE "c"."Matricula" = @__matricula_0
+      LIMIT 1
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      🔍 ObterTodasSolicitacoesAsync INICIADO
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📁 Banco de dados criado: False
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📋 Connection String: Data Source=C:\Users\E38235\Documents\DATA_PYB\dados2025.db
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📊 Encontradas 46 solicitações no SQLite
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics
