@@ -321,6 +321,8 @@ private Task<AuthenticationState>? authenticationStateTask { get; set; }
     private List<SolicitacaoCics2025> solicitacoesAprovadas = new();
     private Dictionary<string, List<SolicitacaoCics2025>> solicitacoesAgrupadas = new();
     
+    // Cache do usuário atual (resolvido uma vez no OnInitializedAsync)
+    private string usuarioAtual = string.Empty;
     // Modal de Recusa
     private bool exibirModalRecusa = false;
     private string motivoRecusa = "";
@@ -328,6 +330,40 @@ private Task<AuthenticationState>? authenticationStateTask { get; set; }
     protected override async Task OnInitializedAsync()
     {
         ambientes = await AmbienteCicsService.ObterAmbientesAtivosAsync();
+        // Resolver e armazenar o usuário atual (uma vez) para evitar awaits dentro dos handlers
+        try
+        {
+            AuthenticationState? authState = null;
+            if (authenticationStateTask != null)
+            {
+                authState = await authenticationStateTask;
+            }
+            else if (AuthenticationStateProvider != null)
+            {
+                authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            }
+
+            var rawName = authState?.User?.Identity?.Name ?? authState?.User?.FindFirst(System.Security.Claims.ClaimTypes.Upn)?.Value
+                          ?? authState?.User?.FindFirst("preferred_username")?.Value ?? authState?.User?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+
+            if (!string.IsNullOrWhiteSpace(rawName))
+            {
+                if (rawName.Contains('\\')) usuarioAtual = rawName.Split('\\', 2)[1];
+                else if (rawName.Contains('@')) usuarioAtual = rawName.Split('@', 2)[0];
+                else usuarioAtual = rawName;
+            }
+            else
+            {
+                // fallback para o serviço (sincrônico)
+                usuarioAtual = CurrentUserService.UserNameSemDominio;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Home] Erro ao resolver usuário na inicialização: {ex.Message}");
+            usuarioAtual = CurrentUserService.UserNameSemDominio;
+        }
+
         await CarregarSolicitacoesPendentes();
     }
 
@@ -606,39 +642,14 @@ private Task<AuthenticationState>? authenticationStateTask { get; set; }
         {
             solicitacao.DataEfetivacao = DateTime.Now;
 
-            // Obter usuário autenticado — preferir CascadingParameter se disponível
-            string usuarioEfetivacao = string.Empty;
-            try
+            // Usar usuário cacheado da inicialização; evita awaits e leituras repetidas
+            var usuarioEfetivacao = usuarioAtual;
+            if (string.IsNullOrWhiteSpace(usuarioEfetivacao))
             {
-                AuthenticationState? authState = null;
-                if (authenticationStateTask != null)
-                {
-                    authState = await authenticationStateTask;
-                }
-                else if (AuthenticationStateProvider != null)
-                {
-                    authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-                }
-
-                var user = authState?.User;
-                var rawName = user?.Identity?.Name ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Upn)?.Value
-                           ?? user?.FindFirst("preferred_username")?.Value ?? user?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-
-                Console.WriteLine($"[Home] Raw auth name: '{rawName}'");
-
-                if (!string.IsNullOrWhiteSpace(rawName))
-                {
-                    if (rawName.Contains('\\')) usuarioEfetivacao = rawName.Split('\\', 2)[1];
-                    else if (rawName.Contains('@')) usuarioEfetivacao = rawName.Split('@', 2)[0];
-                    else usuarioEfetivacao = rawName;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Home] Erro ao obter AuthenticationState: {ex.Message}");
+                usuarioEfetivacao = CurrentUserService.UserNameSemDominio;
             }
 
-            Console.WriteLine($"[Home] CurrentUser (resolved at action time): '{usuarioEfetivacao}'");
+            Console.WriteLine($"[Home] CurrentUser (from cache): '{usuarioEfetivacao}'");
             solicitacao.ResponsavelEfetivacao = usuarioEfetivacao;
         }
         
