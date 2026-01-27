@@ -48,4 +48,9 @@ public interface ILogService
 
     Task<List<string>> ListarArquivosArquivadosAsync();
     Task<List<LogModificacao>> ObterLogsDoArquivoAsync(string arquivoNome);
+        
+        /// <summary>
+        /// Registra um colaborador no sistema
+        /// </summary>
+        Task RegistrarColaboradorAsync(string acao, Colaborador colaborador, string? statusAnterior = null, string? statusNovo = null);
 }
