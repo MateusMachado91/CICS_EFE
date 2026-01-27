@@ -601,7 +601,8 @@
         if (novoStatus == "Implementada" || novoStatus == "Rejeitada")
         {
             solicitacao.DataEfetivacao = DateTime.Now;
-            solicitacao.ResponsavelEfetivacao = CurrentUserService. UserName;
+            Console.WriteLine($"[Home] CurrentUser: '{CurrentUserService.UserName}' | SemDominio: '{CurrentUserService.UserNameSemDominio}'");
+            solicitacao.ResponsavelEfetivacao = CurrentUserService.UserNameSemDominio;
         }
         
         await SolicitacoesCics2025Service.AtualizarSolicitacaoAsync(solicitacao);
