@@ -27,13 +27,14 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, AdminAuthorizationHandler>();
 
 // Add services to the container.
-builder. Services.AddHttpContextAccessor();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ColaboradorService>();
-builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<SuporteService>();
-builder.Services.AddScoped<ICurrentUserService, UserService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Registrar ICurrentUserService após o pipeline de componentes do Blazor
+builder.Services.AddScoped<ICurrentUserService, UserService>();
 
 builder.Services.AddScoped<IJclGeneratorService, JclGeneratorService>();
 
