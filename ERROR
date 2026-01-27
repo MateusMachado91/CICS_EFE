@@ -1,0 +1,9 @@
+C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\Services\ColaboradorService.cs(42,27): error CS1061: ‘ILogService’ não contém uma definição para "RegistrarColabora 
+dorAsync" e não foi possível encontrar nenhum método de extensão "RegistrarColaboradorAsync" que aceite um primeiro argumento do tipo ‘ILogService’ (você está se esquecendo de usar um 
+a diretiva ou uma referência de assembly?) [C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\PYBWeb.Infrastructure.csproj]
+C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\Services\ColaboradorService.cs(66,27): error CS1061: ‘ILogService’ não contém uma definição para "RegistrarColabora 
+dorAsync" e não foi possível encontrar nenhum método de extensão "RegistrarColaboradorAsync" que aceite um primeiro argumento do tipo ‘ILogService’ (você está se esquecendo de usar um 
+a diretiva ou uma referência de assembly?) [C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\PYBWeb.Infrastructure.csproj]
+C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\Services\ColaboradorService.cs(80,31): error CS1061: ‘ILogService’ não contém uma definição para "RegistrarColabora 
+dorAsync" e não foi possível encontrar nenhum método de extensão "RegistrarColaboradorAsync" que aceite um primeiro argumento do tipo ‘ILogService’ (você está se esquecendo de usar um 
+a diretiva ou uma referência de assembly?) [C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Infrastructure\PYBWeb.Infrastructure.csproj]
