@@ -32,7 +32,7 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link @(abaAtiva == "todos" ? "active" : "")" @onclick='() => AlterarAba("todos")'>
-                <i class="bi bi-diagram-3"></i> Ambientes TODOS (PXU/PXS)
+                <i class="bi bi-diagram-3"></i> Ambientes (PXU/PXS)
             </button>
         </li>
     </ul>
@@ -152,16 +152,14 @@
                                                     @ambiente.Isc
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <strong>Steplib CSD:</strong><br>
-                                                    @ambiente.SteplibCsd
+                                                    <strong>Steplib CSD:</strong> @ambiente.SteplibCsd
                                                 </div>
                                                
                                                 @if (!string.IsNullOrEmpty(ambiente.DsnameDfhcsd))
                                                 {
                                                     
                                                         <div class="col-md-4">
-                                                            <strong>DSName DFHCSD:</strong><br>
-                                                            <code>@ambiente.DsnameDfhcsd</code>
+                                                            <strong>DSName DFHCSD:</strong> @ambiente.DsnameDfhcsd
                                                         </div>
                                                     
                                                 }
