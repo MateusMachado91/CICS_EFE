@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PYBWeb.Infrastructure.Data;
-using PYBWeb.Domain.Interfaces; // para ILogService
+using PYBWeb.Domain.Interfaces;
 using PYBWeb.Domain.Entities;
 
 public class ColaboradorService
@@ -39,7 +39,21 @@ public class ColaboradorService
         _context.Colaboradores.Add(colaborador);
         await _context.SaveChangesAsync();
 
-        await _logService.RegistrarColaboradorAsync("CRIAR", colaborador);
+        // registra log de criação (não propaga exceção de log)
+        try
+        {
+            await _logService.RegistrarAsync(
+                acao: "CRIAR",
+                tabela: "Colaborador",
+                registroId: null,
+                registroIdentificador: colaborador.Matricula,
+                detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}"
+            );
+        }
+        catch (Exception)
+        {
+            // ignorar falha no log para não quebrar fluxo
+        }
     }
 
     public async Task AtualizarAsync(Colaborador colaborador)
@@ -63,8 +77,19 @@ public class ColaboradorService
 
         await _context.SaveChangesAsync();
 
-        await _logService.RegistrarColaboradorAsync("EDITAR", colaborador);
-
+        try
+        {
+            await _logService.RegistrarAsync(
+                acao: "EDITAR",
+                tabela: "Colaborador",
+                registroId: null,
+                registroIdentificador: colaborador.Matricula,
+                detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}"
+            );
+        }
+        catch (Exception)
+        {
+        }
     }
 
     public async Task ExcluirAsync(string matricula)
@@ -77,7 +102,20 @@ public class ColaboradorService
 
             _context.Colaboradores.Remove(colaborador);
             await _context.SaveChangesAsync();
-            await _logService.RegistrarColaboradorAsync("EXCLUIR", colaborador);
+
+            try
+            {
+                await _logService.RegistrarAsync(
+                    acao: "EXCLUIR",
+                    tabela: "Colaborador",
+                    registroId: null,
+                    registroIdentificador: colaborador.Matricula,
+                    detalhes: detalhes
+                );
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 

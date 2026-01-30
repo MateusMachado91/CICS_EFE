@@ -104,7 +104,10 @@ namespace PYBWeb.Infrastructure.Services
 
         private readonly LogDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IConfiguration _configuration;
+
+        // Caminho absoluto onde os arquivos de archive serão gravados
+        // ALTERE AQUI SE PRECISAR MUDAR NOVAMENTE
+      private readonly IConfiguration _configuration;
 
         public LogService(LogDbContext context, ICurrentUserService currentUserService, IConfiguration configuration)
         {
@@ -125,12 +128,10 @@ namespace PYBWeb.Infrastructure.Services
         {
             try
             {
-                Console.WriteLine($"[LogService DEBUG] CurrentUser: '{_currentUserService.UserName}' | SemDominio: '{_currentUserService.UserNameSemDominio}'");
-
                 var log = new LogModificacao
                 {
                     DataHora = DateTime.Now,
-                    Usuario = _currentUserService.UserNameSemDominio,
+                    Usuario = _currentUserService.GetCurrentUser(),
                     Acao = acao,
                     Tabela = tabela,
                     RegistroId = registroId,
@@ -149,26 +150,6 @@ namespace PYBWeb.Infrastructure.Services
                 Console.WriteLine($"Erro ao registrar log: {ex.Message}");
             }
         }
-
-        
-        public async Task RegistrarColaboradorAsync(
-            string acao,
-            Colaborador colaborador,
-            string? statusAnterior = null,
-            string? statusNovo = null)
-        {
-            Console.WriteLine($"DEBUG: Usuario atual = {_currentUserService.UserName}");
-            await RegistrarAsync(
-                acao: acao,
-                tabela: "Colaborador",
-                registroId: null,
-                registroIdentificador: colaborador.Matricula,
-                detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}",
-                statusAnterior: statusAnterior,
-                statusNovo: statusNovo
-            );
-        }
-
 
         // Implementação principal com filtro por usuário (opcional)
         public async Task<List<LogModificacao>> ObterLogsAsync(DateTime? dataInicio = null, DateTime? dataFim = null,
