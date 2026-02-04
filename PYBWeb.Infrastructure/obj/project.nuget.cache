@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "8UQcu3wptM1ROOxJay/xxPwv+21t7VfDRSizKVoePmVu2MnrdI0QUlVSXae3aU6ndpgGuV+cEz6bsYwNkqIN9Q==",
+  "dgSpecHash": "DmteykJp3v8ubcZlItAECtCtVThoOwezJRw/uwyctiNHL6K2xBZDvSoxh49fXZqdkSpbt8VevfV5e3jjjh3WzA==",
   "success": true,
   "projectFilePath": "C:\\Users\\E38235\\Documents\\PYB-CICS-Efetivacoes\\PYBWeb.Infrastructure\\PYBWeb.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\E38235\\.nuget\\packages\\azure.core\\1.44.1\\azure.core.1.44.1.nupkg.sha512",
     "C:\\Users\\E38235\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",
+    "C:\\Users\\E38235\\.nuget\\packages\\fluentftp\\38.0.0\\fluentftp.38.0.0.nupkg.sha512",
     "C:\\Users\\E38235\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\E38235\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "C:\\Users\\E38235\\.nuget\\packages\\microsoft.bcl.memory\\9.0.0\\microsoft.bcl.memory.9.0.0.nupkg.sha512",
