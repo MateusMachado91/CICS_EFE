@@ -1,0 +1,74 @@
+Nome da Fila aparece para todos
+ - Deve ter exatamente 4 caracteres.
+ - Não pode começar com a letra 'C'.
+ - Se o sistema for PCG, deve começar com 'P' e os dois últimos caracteres devem coincidir com os dois últimos do nome do sistema (CSS).
+
+Tipo de Fila(EXTRA)
+DDNAME
+ - 'A,INTRDR'
+ - Um nome que começa com 'BPDcss', contém '.S' e '.G00000.'
+
+DSNAME/SYSOUT
+ESTADO DO ARQUIVO(INITIAL OU DEFERRED)
+FORMATO DO REGISTRO(FIXED OU VARIABLE)(BLOCK OU UNBLOCK)(ASA OU MAC)
+TIPO DO ARQUIVO(OUTPUT OU INPUT)
+TAMANHO DO REGISTRO (0)
+ - Deve ser menor que 32768.
+ - Não pode ser zero. 
+TAMANHO DO BLOCO (0)
+ - Se o formato for 'Block', deve ser entre 1 e 32767.
+ - Se o formato for 'Unblock', deve ser 0.
+
+
+ Tipo de Fila(INTRA)
+TRANSAÇÃO (TEXT)
+TRIGLEVEL (1) 
+ - Deve ser maior que zero.
+DESTINO (TERMINAL OU FILE)
+TERMINAL (TEXT)
+ - Obrigatório se o destino for 'Terminal'.
+ - Deve ter 4 caracteres.
+
+
+Tipo de Fila(INDIRECT)
+ASSOCIADO A: (TEXT)
+ - Deve ter 4 caracteres.
+
+REGRAS APLICADAS!!
+
+
+PROXIMO PASSO REVISAR TODAS AS REGRAS**[
+
+
+Mapeamento: TIPO = "Extra"
+
+DADOS01 = DESTID.Text ' Nome da fila (DDNAME)
+DADOS02 = EXT_DSCNAME.Text ' DSCNAME (identificador lógico / DSCNAME)
+DADOS03 = EXT_OPEN(selected).Caption ' OPEN (valor selecionado: "Deferred" ou "Initial")
+DADOS04 = 1ª opção marcada de EXT_RECFM (EXT_RECFM(i).Caption) — ex.: "Fixed" (se houver)
+DADOS05 = 2ª opção marcada de EXT_RECFM (se houver)
+DADOS06 = 3ª opção marcada de EXT_RECFM (se houver) (Se houver mais opções marcadas, seguem em DADOS07, DADOS08..., mas veja abaixo que o código espera até DADOS06 para JCL.)
+DADOS07 = EXT_TYPEFILE(selected).Caption ' Tipo do arquivo ("Output" / "Input")
+DADOS08 = EXT_RECSIZE.Text ' RECSIZE (tamanho do registro)
+DADOS09 = EXT_BLKSIZE.Text ' BLKSIZE (tamanho do bloco)
+DADOS10 = "" (placeholder) ' A rotina adiciona um separador para completar até o 10º campo
+DADOS11 = EXT_DSNAME.Text ' DSNAME (ou indicador SYSOUT/A,INTRDR)
+DADOS12 = (não usado por monta_reg_extra — fica vazio)
+
+
+Mapeamento: TIPO = "Intra"
+
+DADOS01 = DESTID.Text ' Nome da fila
+DADOS02 = INT_TRANSID.Text ' Transaction ID (TRANSID)
+DADOS03 = INT_TRIGLEVEL.Text ' TRIGLEV
+DADOS04 = INT_DESTFAC(selected).Caption ' DESTFAC ("Terminal" ou "File")
+DADOS05 = INT_TERMID.Text ' Terminal id (só se DESTFAC = Terminal), senão vazio
+DADOS06..DADOS11 = (vazios) ' a montagem não preenche o resto para Intra
+DADOS12 = (não usado)
+
+
+Mapeamento: TIPO = "Indirect"
+
+DADOS01 = DESTID.Text
+DADOS02 = IND_INDDEST.Text ' fila associada (INDDEST)
+DADOS03..DADOS12 = (vazios) ' a montagem só acrescenta esse campo

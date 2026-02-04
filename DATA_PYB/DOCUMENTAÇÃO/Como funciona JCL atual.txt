@@ -1,0 +1,78 @@
+Referência e declaração da DLL
+No módulo PYB002G.BAS, está declarado:
+
+vb
+Public Declare Function pxuotrxw Lib "pxuotrxw.dll" (pxucatr_e As PXUCATR, ByVal xutrmsgc201 As String) As Integer
+Public pxucatr_e As PXUCATR
+Ou seja, existe uma função na DLL chamada pxuotrxw, que recebe uma estrutura (do tipo PXUCATR) e uma string de 201 caracteres, e retorna um inteiro.
+
+2. Estrutura PXUCATR
+A estrutura usada para comunicação é esta:
+
+vb
+Type PXUCATR  'Estrutura para a versao 2 ou 3
+   xutrversaoc01 As String * 1
+   xutrcodretornoc02 As String * 2
+   xutrlogc01 As String * 1
+   xutrpedidoc02 As String * 2
+   xutrsistemac03 As String * 3
+   xutrpermissaoc03 As String * 3
+   xutrusuarioc15 As String * 15
+   xutrsenhac15 As String * 15
+   xutrtipoarquivoc01 As String * 1
+   xutrservidorremotoc20 As String * 20
+   xutrarqlocalc100 As String * 100
+   xutrarqremotoc100 As String * 100
+End Type
+Essa estrutura contém campos para: versão, código de retorno, usuário, senha, sistema, permissão, informações do arquivo local/remoto, servidor, etc.
+
+3. Modo de uso da função pxuotrxw
+Na prática, a chamada ocorre assim (vide SubmeteJCL em PYB002SFRM.txt):
+
+vb
+codretorno_i% = pxuotrxw(pxucatr_e, xutrmsgc201)
+Antes disso, a estrutura pxucatr_e é preenchida com os dados de controle e caminho do arquivo JCL local, servidor de destino, usuário, senha, etc.
+
+4. Fluxo detalhado de execução
+O programa cria um arquivo local JCL, que representa a job a ser processada no mainframe.
+Preenche cada campo da estrutura PXUCATR:
+Exemplo:
+xutrtipoarquivoc01 = "A", (tipo de arquivo: provavelmente 'A' de Arquivo)
+xutrservidorremotoc20 = "ibm" (ou outro, conforme INI)
+xutrarqlocalc100 = <ARQUIVO JCL GERADO>
+Demais campos com códigos de permissão, usuário, senha (muitas vezes vazios para integrações internas).
+Chama a função da DLL passando a estrutura e uma string de mensagem para retorno.
+A DLL tenta transferir o arquivo JCL para o servidor especificado, usando protocolos internos à DLL (pode ser FTP, SFTP, conexão proprietária, etc.).
+O retorno indica sucesso/falha e, caso necessário, a string de mensagem é preenchida com mensagens detalhadas.
+5. Função e uso prático
+Encapsula a transferência: Toda a lógica de comunicação com o mainframe/JES2 está interna à DLL.
+Abstração: O programa apenas prepara o que será enviado e interpreta o retorno, não precisa saber como se dá a conexão.
+Integração: Permite que o sistema em VB6 dialogue com plataformas heterogêneas (Windows para mainframe) sem mexer em baixo nível de protocolos.
+6. Campos importantes e o que representam
+xutrusuarioc15 / xutrsenhac15: Provavelmente usado para autenticação no destino.
+xutrservidorremotoc20: Nome (ou IP) do servidor mainframe (ex: “ibm”).
+xutrarqlocalc100: Caminho do arquivo JCL local a transferir.
+xutrarqremotoc100: Caminho/identificação do destino no mainframe (nem sempre preenchido).
+xutrtipoarquivoc01: “A” indica tipo de operação (pode ser arquivo, comando, etc.).
+xutrlogc01, xutrpedidoc02, xutrsistemac03, etc.: Códigos de controle para rastreio ou auditoria.
+7. Análise da função pxuotrxw
+Possível funcionamento interno (suposição baseada em padrões de DLLs do tipo):
+
+Valida parâmetros.
+Prepara conexão com o servidor de destino.
+Efetua transferência do arquivo (FTP/SFTP/SOCKET/outro), ou interpola comandos JES2 como SUBMIT.
+Retorna status (0 = sucesso, <>0 = erro) e mensagem.
+8. Dependências e pré-requisitos
+O usuário deve estar autenticado previamente (via pxuoutxw.dll).
+O ambiente de destino (“ibm”, “jes2”, etc.) precisa estar acessível para a DLL.
+A estrutura precisa ser preenchida corretamente – caso contrário, a transferência não ocorre.
+9. Resumo prático e segurança
+A DLL pxuotrxw.dll é essencial para a transmissão dos jobs ao mainframe/JES2.
+Toda a comunicação sensível (usuário, senha, caminhos, job JCL) é feita via parâmetro da função.
+Erros e exceções são tratados retornando código e mensagem para o VB6.
+Resumo Final
+pxuotrxw.dll é uma DLL de integração, projetada para enviar arquivos (Jobs JCL) do Windows para um mainframe JES2.
+Opera recebendo uma estrutura com todos dados necessários e uma variável de mensagem para retorno.
+O código da aplicação enche a estrutura e invoca a função, esperando um código de retorno e uma mensagem.
+A lógica de autenticação, transferência e comunicação está toda encapsulada dentro da DLL.
+Se quiser um exemplo prático de chamada, ou precisa especular o que acontece internamente, ou como reimplementar, posso detalhar! Se tem a DLL e precisa inspecionar (reversão), posso guiar quanto a ferramentas (IDA, Ghidra, etc.) também.

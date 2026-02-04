@@ -1,0 +1,353 @@
+Visão geral rápida
+
+Fonte dos dados: tabela "solicitações" lida via ADO (arq_pedidos_db / arq_pedidos_ds).
+Gatilho principal: seleção de um ambiente CICS na lista REL_CICS (evento REL_CICS_Click).
+Saída na tela: o MSFlexGrid chamado JCL recebe as linhas de JCL construídas pelas rotinas linha_jcl / linha_dct.
+Submissão: SUBMETE_Click grava o conteúdo do grid em um arquivo .jcl e chama SubmeteJCL (que usa a rotina nativa pxuotrxw para enviar).
+Fluxo detalhado (o "como" acontece)
+
+Carregamento inicial (Form_Load)
+Monta uma SQL: Sql$ = "SELECT DISTINCTROW applid,situaçao FROM solicitações GROUP BY applid,situaçao HAVING (situaçao = 'Em cadastramento.');"
+Abre o banco via Call AbreBase(arq_pedidos_db, nomearquivo) e abre um Recordset com essa SQL.
+Popula o MSFlexGrid REL_CICS com os valores distintos de APPLID (cada APPLID = um ambiente CICS disponível para processamento).
+Se não houver registros, esconde botões/controles apropriados.
+Usuário escolhe um ambiente (REL_CICS_Click)
+Quando o usuário clica numa linha de REL_CICS:
+Lê parâmetros do INI (AcessaINI): sufixo, máquina, STEPLIB CSD, DSNAME DFHCSD — usados para montar cabeçalho JCL (jobs com sufixo/STEPLIB/DFHCSD).
+Monta uma SQL para buscar todos os registros da tabela "solicitações" para aquele applid e situaçao = 'Em cadastramento.': SELECT * FROM solicitações WHERE ((situaçao = 'Em cadastramento.') and (applid='<CICS>')) ORDER BY applid,tabela,dia DESC,hora DESC
+Abre o recordset arq_pedidos_ds com essa consulta.
+Iteração sobre os registros e construção do JCL
+Loop: Do While arq_pedidos_ds.EOF = 0
+
+Para cada registro verifica arq_pedidos_ds!TABELA (os tipos que o código trata são: "DCT", "FCT", "PCT", "PPT").
+Dependendo do tipo, chama sub-rotinas que formatam e adicionam linhas ao grid JCL:
+a) DCT (Data Control Tables)
+
+Se primeira entrada DCT, monta um job de IEBGENER com cabeçalho específico (montado inline).
+Usa linha_dct(lab, comando, cont, TIPO, entrada) para formatar registros DCT: essa rotina formata colunas, inclui marcadores "*" e chama linha_jcl para inserir cada linha no grid.
+Trata subtipos via arq_pedidos_ds!TIPO: "Extra", "Intra", "Indirect" — cada um gera um bloco de linhas com parâmetros como DFHDCT TYPE=EXTRA/INTRA/INDIRECT, DESTID, TRANSID, DSCNAME, RECFORM, BLKSIZE, etc.
+Para "Extra" monta RECFM combinando dados04..dados06, monta DSNAME/TYPEFLE/RECSIZE/BLKSIZE conforme campos dadosXX, e inclui comentários DSNAME ou SYSOUT quando apropriado.
+b) FCT (File Control Table)
+
+Se for a primeira vez que precisa de CSD (primeira_vez_csd), chama monta_jcl_csd() para gerar o cabeçalho do job DFHCSDUP (//PYBCSD2... //SYSIN DD *).
+Para cada FCT gera uma linha com a operação retornada por operaçao_csd() (que converte arq_pedidos_ds!OPERAÇÃO em "DEFINE"/"DELETE"/"ALTER") e parâmetros FILE(...).
+Se não é DELETE, adiciona parâmetros adicionais: DSNAME(...), STATUS(...), RECORDFORMAT(...), e permissões (ADD/READ/UPDATE...) lendo campos dados05..dadosXX dinamicamente.
+Se o arquivo for remoto (arq_pedidos_ds!TIPO = "Remoto") usa AcessaINI para obter REMOTESYSTEM e gera REMOTESYSTEM(...).
+Sempre adiciona GROUP (FCT + CSS + sufixo + "A").
+c) PCT (Program Control Table / Transações)
+
+Também usa monta_jcl_csd se necessário.
+Gera linhas como DEFINE TRANSACTION(...) ou DELETE TRANSACTION(...), e parâmetros PROGRAM(...), TWASIZE(...), STATUS(...), TASKDATALOC(...), DESCRIPTION(...), SPURGE/TPURGE/ISOLATE, GROUP(CSS).
+d) PPT (Program / Mapset)
+
+Usa monta_jcl_csd se necessário.
+Se PPT é "Mapa" gera MAPSET(...), senão gera PROGRAM(...) e parâmetros LANGUAGE, STATUS, DATALOC, RESIDENT(YES/NO), DESCRIPTION, GROUP(CSS).
+Operaçao (DEFINE/ALTER/DELETE) também aplicada.
+Para cada registro processado o código:
+
+chama linha_jcl(" ") para separar blocos (insere linhas vazias)
+adiciona o arq_pedidos_ds!Contador na ListBox REL_REGISTROS_CADASTRADOS para depois atualizar o banco (marcar como "Cadastrada." e colocar responsável/data/hora).
+Como as linhas são inseridas no grid
+
+Função linha_jcl(Linha As String):
+vai para a última linha (JCL.Row = JCL.Rows - 1), define JCL.Text = Linha, incrementa JCL.Rows.
+Ou seja, cada chamada insere uma nova linha no MSFlexGrid JCL.
+Helpers importantes
+
+monta_jcl_csd(): escreve o cabeçalho de job para DFHCSDUP (//PYBCSD2<sufixo> JOB ... //EXEC PGM=DFHCSDUP ... //SYSIN DD *).
+operaçao_csd(): converte arq_pedidos_ds!OPERAÇÃO em strings " DEFINE " / " DELETE " / " ALTER " (note os espaços — usado diretamente nas linhas).
+linha_dct(): formata colunas para entradas DCT e chama linha_jcl para inserção.
+AcessaINI(Zcntl & "\PYBK02MW.INI", appl$, "Chave"): pega parâmetros por ambiente (sufixo, máquina, steplib, dfhcsd, ISC etc).
+Pós-armazenamento e submissão (SUBMETE_Click)
+Quando o usuário pressiona SUBMETE:
+Garante que qualquer edição pendente (ALTERA) seja aplicada (atualiza_jcl).
+Verifica se JCL tem conteúdo; se vazio, apenas foca outro controle.
+Gera um nome de arquivo com máquina + sufixo + timestamp e extensão ".jcl", abre esse arquivo e grava todas as linhas do grid JCL.
+Fecha o arquivo e chama SubmeteJCL(Caminho & "" & arq$) para transferir ao servidor IBM (rotina SubmeteJCL prepara a estrutura pxucatr_e e chama pxuotrxw(pxucatr_e, xutrmsgc201)).
+Depois, para cada item em REL_REGISTROS_CADASTRADOS, abre o DB e executa um UPDATE para ajustar RESPONSÁVEL, DIA_EFETIVAÇÃO, HORA_EFETIVAÇÃO e SITUAÇÃO = 'Cadastrada.' (faz BeginTrans / CommitTrans / RollbackTrans baseado no iRecordsAffected).
+Atualiza REL_JOBS.Refresh e esconde/mostra controles, remove o ambiente da lista REL_CICS se todos os pedidos daquele ambiente foram processados.
+Outros pontos relevantes / dependências externas
+
+AbreBase(arq_pedidos_db, nomearquivo) — rotina externa que abre a conexão com o banco (não mostrada aqui).
+AcessaINI — rotina que lê o arquivo INI com parâmetros por APPLID.
+pxuotrxw / estrutura pxucatr_e — rotina nativa/externa usada para transferir o arquivo ao servidor IBM (SubmeteJCL prepara parâmetros e chama essa rotina).
+Caminho, Zcntl, nomearquivo, UsuarioLogado, versao: variáveis globais do app usadas por estas rotinas (p.ex. Caminho define onde estão os arquivos REL_JOBS e onde gravam o .jcl).
+Resumo em uma frase
+
+O programa lê da tabela "solicitações" todos os registros "Em cadastramento." para um APPLID selecionado, interpreta cada registro conforme o tipo (DCT/FCT/PCT/PPT), formata linhas JCL usando funções auxiliares (linha_dct, linha_jcl, monta_jcl_csd, operaçao_csd), insere essas linhas no MSFlexGrid JCL e, quando o usuário submete, grava o grid num arquivo e envia ao mainframe via pxuotrxw, atualizando depois o status dos pedidos no banco.
+Se quiser, posso:
+
+Mapear exatamente quais campos DADOSxx (dados01..dados12) do banco viram quais parâmetros JCL (linha a linha).
+Extrair um exemplo concreto: pegar um registro de exemplo e mostrar o bloco JCL gerado.
+Ajudar a transformar essa lógica em um script/serviço moderno (por exemplo, Python) que replique a montagem.
+You said: Mapear exatamente quais campos DADOSxx (dados01..dados12) do
+Mapear exatamente quais campos DADOSxx (dados01..dados12) do banco viram quais parâmetros JCL (linha a linha).
+Copilot said: Perfeito — abaixo está o mapeamento exato
+Perfeito — abaixo está o mapeamento exato (linha a linha) de como cada campo dados01..dados12 do recordset arq_pedidos_ds é usado para montar os parâmetros JCL, organizado por valor de TABELA (DCT, FCT, PCT, PPT). Para cada uso eu indico a linha/JCL gerada (ou o template) e observações sobre condicionais ou interpretações. Onde o uso é ambíguo eu anoto a inferência.
+
+Resumo rápido
+
+Cada chamada a linha_jcl() insere uma linha no MSFlexGrid JCL.
+DADOSxx são usados de forma diferente conforme TABELA e, em alguns casos, conforme TIP O (por exemplo, FCT remoto vs local; DCT subtipos Extra/Intra/Indirect).
+Campos auxiliares: CSS, TIPO, dados02 (às vezes número de flags) e dados11 (muitas vezes descrição/DSN) são usados em vários contextos — indiquei cada ocorrência.
+TABELA = "DCT" (DFHDCT — DCT entries)
+Contexto: DCT tem subtipos em arq_pedidos_ds!TIPO: "Extra", "Intra", "Indirect".
+Variáveis usadas:
+dados01
+Uso: DESTID em blocos EXTR A/INTRA/INDIRECT.
+JCL gerado: e.g. linha_dct("", "DESTID=" + dados01, ...)
+Observação: também usado para montar lab$ (rótulo/coluna esquerda).
+dados02
+Uso: DSCNAME (nome lógico do dataset) ou TRANSID/INDDEST conforme subtipo.
+JCL gerado: "DSCNAME=" + dados02 e.g. linha_dct("", "DSCNAME=" + dados02,...)
+Observação: lab1$ = dados02 é usado como identificador exibido.
+dados03
+Uso:
+Para TIPO="Extra": OPEN = UCase$(dados03) → "OPEN(READ/WRITE/...)".
+Para TIPO="Intra": TRIGLEV = dados03 → "TRIGLEV=<dados03>".
+JCL gerado: linha_dct("", "OPEN=" + UCase$(dados03), ...) ou linha_dct("", "TRIGLEV=" + dados03,...)
+dados04
+Uso:
+Em "Extra": Left$(dados04,3) → base para RECFM (os 3 primeiros chars são usados para montar RECFORM).
+Em "Intra": Left$(dados04,1) é testado: se = "T" então DESTFAC=(TERMINAL, dados05) senão DESTFAC=FILE.
+JCL gerado: "RECFORM=" + recfm$ (montado de dados04/dados05/dados06) e/ou DESTFAC.
+Observação: dados04 contém informação de formato/flag.
+dados05
+Uso:
+Em "Extra": Left$(dados05,1) = "B" ? indica BLOQUEADO (BLK) → se bloqueado inclui BLKSIZE=dados09.
+Em "Intra": quando Left(dados04,1)="T", dados05 é o id do terminal usado em DESTFAC=(TERMINAL,dados05).
+JCL gerado: possivelmente "BLKSIZE=" + dados09; ou "DESTFAC=(TERMINAL,<dados05>)".
+dados06
+Uso: em "Extra", se dados06 <> " " então recfm$ = recfm$ + Left$(dados06,1)
+Interpretação: contribui com um caractere adicional ao RECFM (e.g., V, etc).
+dados07
+Uso: TYPEFLE = UCase$(dados07)
+JCL gerado: "TYPEFLE=<dados07>"
+dados08
+Uso: RECSIZE
+JCL gerado: "RECSIZE=" + dados08
+dados09
+Uso: BLKSIZE (somente se bloqueado, i.e., Left(dados05,1)="B")
+JCL gerado: "BLKSIZE=" + dados09
+dados10
+Não referenciado no trecho mostrado.
+dados11
+Uso: DSNAME para esta entrada (pode ser nome de dataset ou número SYSOUT).
+JCL gerado: comentário/linha: "* DSNAME para esta entrada :" + dados11
+Observação: se Len(dados11)=1 ou InStr(dados11,"INTRDR")>0 então dsn$ = "SYSOUT=" + dados11 (indicação para SYSOUT).
+dados12
+Não usado neste bloco DCT.
+Exemplo (Extra) — bloco gerado (template):
+
+DFHDCT TYPE=SDSCI
+DSCNAME=<dados02>
+TYPEFLE=<UPPER(dados07)>
+RECSIZE=<dados08>
+[BLKSIZE=<dados09>] (se dados05 indicar B)
+RECFORM=<montado de dados04,dados05,dados06>
+DSNAME para esta entrada :<dados11>
+DFHDCT TYPE=EXTRA
+DESTID=<dados01>
+DSCNAME=<dados02>
+OPEN=<UPPER(dados03)>
+TABELA = "FCT" (FILE control entries)
+Linha inicial sempre: operaçao_csd() + "FILE(" + dados01 + ")"
+dados01
+Uso: nome lógico do FILE (FILE(<dados01>))
+Se operaçao <> " DELETE " então:
+Se arq_pedidos_ds!TIPO <> "Remoto" (arquivo local):
+dados11
+Uso: DSNAME(<dados11>) — dataset físico.
+JCL: "DSNAME(" + dados11 + ")"
+dados03
+Uso: STATUS(...)
+JCL: "STATUS(" + dados03 + ")"
+dados04
+Uso: RECORDFORMAT
+L
+e
+f
+t
+(
+d
+a
+d
+o
+s
+04
+,
+1
+)
+ — só o primeiro caractere.
+JCL: "RECORDFORMAT(" + Left$(dados04,1) + ")"
+dados02
+Uso: é tratado como um contador N. O código: For i = 5 To 4 + dados02
+Portanto dados05 até dados(4+dados02) contêm strings que são permissões/flags.
+JCL gerado por cada dadosXX no range:
+Se valor = "Add" -> linha_jcl(" ADD(YES)")
+"Browse" -> BROWSE(YES)
+"Delete" -> DELETE(YES)
+"Read" -> READ(YES)
+"Update" -> UPDATE(YES)
+Observação: ou seja, dados02 = número de flags/atributos de acesso (quantidade).
+dados12
+Uso: se Not IsNull(dados12) então gera "STRINGS(" + dados12 + ")"
+Se arq_pedidos_ds!TIPO = "Remoto":
+dados02
+Uso: usado como appl$ para lookup INI: appl$ = dados02; r% = AcessaINI(..., appl$, "ISC") e gera "REMOTESYSTEM(" + r% + ")"
+Observação: Nesse caso dados02 NÃO é o count de flags — é o identificador de aplicação remota.
+Sempre gera: "LSRPOOLID(NONE)"
+Sempre adiciona: "GROUP (FCT" + CSS + sufixo + "A)" — CSS vem do registro.
+Resumindo FCT:
+
+dados01 = FILE name (FILE(...))
+dados02 = condicional:
+Se TIPO <> "Remoto": dados02 = número de flags (N) — flags estão em dados05..dados(4+N)
+Se TIPO = "Remoto": dados02 = nome de aplicação remota (appl) para lookup ISC no INI
+dados03 = STATUS(...)
+dados04 = RECORDFORMAT (1o char)
+dados05..dados(4+N) = flags de acesso (Add/Browse/Delete/Read/Update)
+dados11 = DSNAME (dataset) para arquivo local
+dados12 = STRINGS(...) opcional
+Exemplo (local):
+
+DEFINE FILE(<dados01>)
+DSNAME(<dados11>)
+STATUS(<dados03>)
+RECORDFORMAT(<Left(dados04,1)>)
+ADD(YES) / READ(YES) / ... (para cada dados05..)
+STRINGS(<dados12>) (se presente)
+LSRPOOLID(NONE)
+GROUP(FCT<CSS><sufixo>A)
+Exemplo (remoto):
+
+DEFINE FILE(<dados01>)
+REMOTESYSTEM(<ISC recuperado via INI usando dados02>)
+LSRPOOLID(NONE)
+GROUP(...)
+TABELA = "PCT" (TRANSACTION — PCT)
+Primeira linha: operaçao_csd() + "TRANSACTION(" + dados01 + ")"
+dados01 = TRANSACTION id
+Se operaçao <> " DELETE " então:
+dados02 = PROGRAM(...) -> "PROGRAM(" + dados02 + ")"
+dados03 = TWASIZE(...) -> "TWASIZE(" + dados03 + ")"
+dados04 = STATUS(...) -> "STATUS(" + dados04 + ")"
+dados05 = TASKDATALOC(...) optional — se NOT IsNull(dados05) então "TASKDATALOC(" + dados05 + ")"
+dados11 = usado para description: "DESCRIPTION
+Previsao:"+dados11+"execucoesdia" Em seguida são fixos: SPURGE (YES), TPURGE (YES), ISOLATE(NO)
+Final: "GROUP(" + CSS + ")"
+Resumindo PCT:
+
+dados01 = Transaction name (TRANSACTION(...))
+dados02 = Program name (PROGRAM(...))
+dados03 = TWASIZE
+dados04 = STATUS
+dados05 = TASKDATALOC (opcional)
+dados11 = previsão / número de execuções por dia — colocado em DESCRIPTION
+Exemplo:
+
+DEFINE TRANSACTION(<dados01>)
+PROGRAM(<dados02>)
+TWASIZE(<dados03>)
+STATUS(<dados04>)
+TASKDATALOC(<dados05>) (se houver)
+DESCRIPTION( Previsao : <dados11> execucoes dia )
+... GROUP(<CSS>)
+TABELA = "PPT" (PROGRAM/MAPSET — PPT)
+Decide entre MAPSET ou PROGRAM de acordo com dados03:
+Se dados03 = "Mapa" -> usa MAPSET(<dados01>)
+Senão -> usa PROGRAM(<dados01>) e adiciona CONCURRENCY(THREADSAFE)
+Se operaçao <> " DELETE " então:
+dados02 = LANGUAGE(...) (somente quando não é "Mapa")
+dados04 = STATUS(...)
+dados05 = DATALOC(...) (se NOT IsNull(dados05) e não é mapa)
+dados12 = residente: If dados12 <> "" Then RESIDENT = YES else NO
+dados11 = DESCRIPTION(<dados11>)
+Final: GROUP(<CSS>)
+Resumindo PPT:
+
+dados01 = Program name ou Mapset name (PROGRAM(...) ou MAPSET(...))
+dados02 = LANGUAGE (quando PROGRAM)
+dados03 = indica se é "Mapa" (string comparada) — determina uso MAPSET vs PROGRAM
+dados04 = STATUS
+dados05 = DATALOC (opcional, somente se PROGRAM)
+dados11 = DESCRIPTION text
+dados12 = flag de residente (não vazio -> RESIDENT(YES))
+Exemplo:
+
+DEFINE PROGRAM(<dados01>)
+CONCURRENCY(THREADSAFE)
+LANGUAGE(<dados02>)
+STATUS(<dados04>)
+DATALOC(<dados05>)
+RESIDENT(YES/NO) — baseado em dados12
+DESCRIPTION(<dados11>)
+GROUP(<CSS>)
+Campos com uso transversal / observações gerais
+dados11
+Usado muitas vezes como DSNAME (FCT local), DSNAME comentário (DCT), ou descrição (PCT, PPT). Você precisa interpretar tipo/tabela para saber se dados11 é DSNAME ou descrição.
+dados02
+Em FCT é sobrecarregado: pode ser um contador (quando local) ou um appl remoto (quando TIPO = "Remoto").
+Em DCT/PCT/PPT tem significados diferentes (em DCT dados02 = DSCNAME/transid/inddest; em PCT/PPT pode ser programa/language).
+CSS
+Não faz parte dos dadosXX mas é usado para montar GROUP(...).
+TIPO do registro (arq_pedidos_ds!TIPO)
+No FCT: distingue "Remoto" vs local.
+No DCT: TIPO se refere a subtipos DCT: "Extra"/"Intra"/"Indirect".
+Formatação RECFM (DCT)
+recfm$ é montado com Left(dados04,3) + ("BLK" ou "UNB" conforme dados05) + possivelmente Left(dados06,1).
+Em FCT usam Left(dados04,1) para RECORDFORMAT (apenas 1 char).
+Faixa de permissões no FCT
+Para arquivo local, os flags de acesso são lidos dinamicamente de dados05 até dados(4+dados02). Cada item é uma string literal "Add"/"Browse"/"Delete"/"Read"/"Update". Esses geram ADD(YES) / BROWSE(YES) / etc.
+STRINGS(...) em FCT
+dados12 -> STRINGS(dados12) se presente.
+RESIDENT (PPT)
+dados12 serve como indicador para marcar RESIDENT(YES) se não vazio.
+Mapa resumido por campo (por campo, com prioridades)
+dados01:
+DCT: DESTID (e rótulo)
+FCT: FILE name (FILE(...))
+PCT: TRANSACTION id
+PPT: PROGRAM or MAPSET name
+dados02:
+DCT: DSCNAME / TRANSID / INDDEST (dependendo do subtipo)
+FCT: if TIPO="Remoto" => appl (lookup ISC); else => integer count N (nº de flags)
+PCT: PROGRAM name
+PPT: LANGUAGE (quando PROGRAM)
+dados03:
+DCT: (Extra) OPEN; (Intra) TRIGLEV
+FCT: STATUS
+PCT: TWASIZE
+PPT: (value checked for "Mapa") or unused as other fields
+dados04:
+DCT: parte do RECFM (Left 3) / flag teste
+FCT: RECORDFORMAT (Left 1)
+PCT: STATUS
+PPT: STATUS (usado em PPT como dados04)
+dados05:
+DCT: parte do indicador BLK/terminal ID; em Intra é terminal id se DESTFAC terminal
+FCT: primeiro flag de permissão (ou se remoto, usado diferentemente — para remoto dados02 indica appl)
+PCT: TASKDATALOC (opcional)
+PPT: DATALOC (se PROGRAM)
+dados06:
+DCT: elemento extra para RECFM (1o char)
+Resto: geralmente não usado nos outros casos
+dados07:
+DCT: TYPEFLE
+Outros: raramente usado (não referenciado em PCT/PPT)
+dados08:
+DCT: RECSIZE
+dados09:
+DCT: BLKSIZE (se bloqueado)
+dados10:
+Não usado no trecho fornecido
+dados11:
+DCT: DSNAME (ou SYSOUT=...) — comentário
+FCT: DSNAME (dataset) para arquivo local
+PCT: usado em DESCRIPTION (previsao execucoes/dia)
+PPT: DESCRIPTION text
+dados12:
+FCT: STRINGS(...) (se não nulo)
+PPT: indicador de residente (não vazio -> RESIDENT=YES)
+PCT: não usado
+DCT: não usado

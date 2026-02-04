@@ -1,0 +1,18 @@
+NOME DA TRANSAÇÃO(TEXT)
+ - Deve começar ou terminar com os dois últimos caracteres do sistema (CSS).
+ - Exemplo: se CSS = "SS", então TRANSID deve começar ou terminar com "SS".
+PROGRAMA PARA ATIVAR(TEXT)
+ - Deve começar com CSS + "P" ou com "PWXP".
+ - Exemplo: se CSS = "SS", então PROGRAM deve começar com "SSP".
+TWASIZE(0)
+ - Deve ser menor que 32768.
+ESTADO INICIAL (TEXT)
+DESCRIÇÃO (TEXT)
+PREVISÃO EXECS/DIA (TEXT)
+ - Deve ser preenchida com o número estimado de execuções por dia.
+ALOCAÇÃO DOS DADOS (ANY OU BELOW)
+ -Se a opção "Below" for selecionada, é obrigatório justificar a escolha no campo.
+
+REGRAS APLICADAS!!
+
+PROXIMO PASSO REVISAR TODAS AS REGRAS**

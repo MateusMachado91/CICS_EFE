@@ -1,0 +1,146 @@
+Regras de Validação
+
+🔹 FILE (Nome do Arquivo)
+Deve começar com o valor de Solicitação.CSS.Text
+Convertido para maiúsculas
+Validação feita em consiste_file()
+
+🔹 DSNAME
+Deve começar com BPD + Solicitação.CSS.Text
+Deve conter .D e .G00000
+Não pode conter _
+Validação feita em consiste_dsname()
+Ele exibe um exemplo na tela BPDPXU.D____.G00000
+
+🔹 SERVREQ (Serviços)
+Pelo menos um dos 5 serviços deve estar marcado
+Validação feita em consiste_servreq()
+
+🔹 STRNO (Número de Strings)
+Valor entre 1 e 10
+Se SERVREQ(1)*Browse estiver marcado, deve ser ≥ 3
+Validação feita em consiste_strno()
+
+🔹 SYSIDNT (CICS Remoto)
+Não pode estar vazio
+Validação feita em consiste_sysidnt()
+
+🔹 cod_agencia
+Deve ser numérico e diferente de zero
+Preenchido com zeros à esquerda até 4 dígitos
+Validação feita em consiste_padrao()
+
+🔹 ARQS_PADRAO
+Pelo menos um dos 5 arquivos deve estar marcado
+Validação feita em consiste_padrao()
+
+
+Montagem de Registros
+
+🔹 Local (monta_reg_local)
+Campos:
+Número de serviços selecionados
+Status (FILSTAT)
+Formato (RECFM)
+Serviços (SERVREQ)
+DSNAME BPDPXU.D____.G00000
+STRNO
+
+__________________________________________________________________
+🔹 Padrão (monta_reg_padrao)
+Tipo: I, O, S, P, X
+Serviços são definidos por tipo
+DSNAME é montado como:
+BPDBNOA.D<TIPO>I001.G00000.AGE<cod_agencia>
+STRNO fixado como "03"
+
+Prefixo: "BNO" + tipo + cod_agencia
+Tipo é derivado da posição do checkbox:
+
+I → Índice
+O → Outros 5 Serviços → Add, Browse, Delete, Read, Update.
+S → Sustados
+P → Pacote 4 Serviços → Add, Browse, Read, Update.
+X → Índice Alternado do Pacote 2 Servicços →  Browse, Read, 
+
+DSNAME gerado:
+BPDBNOA.D<TIPO>I001.G00000.AGE<cod_agencia>
+
+
+Número de strings (STRNO) fixado como "03".
+
+Serviços incluídos por tipo:
+
+I: Browse, Read, Update
+O: Todos os serviços
+S e P: Add, Browse, Read, Update
+X: Browse, Read
+
+
+Checklist: Preenchimento Padrão BNO (Tela "Solicitações para o ambiente CICS")
+
+1. Código da Agência
+Obrigatório
+Preencher com 4 dígitos numéricos (ex: 0045)
+Não pode ser zero.
+Campo: cod_agencia
+
+2. Arquivos Padrão (BNO)
+Marcar pelo menos um dos seguintes arquivos padrão BNO:
+Índice (BNOI1age)
+Outros (BNOO1age)
+Sustados (BNOS1age)
+Pacote (BNOP0age)
+Índice alternado do Pacote (BNOX0age)
+(Campos: ARQS_PADR O(0 a 4))
+Se nenhum arquivo for marcado, não é possível prosseguir.
+
+3. Status e Formato
+Status inicial: Enable
+Formato do registro: Fixed
+Geralmente já vêm selecionados como padrão.
+
+4. Serviços
+Os serviços disponíveis são: Add, Browse, Delete, Read, Update
+Geralmente, para o padrão BNO, os serviços são preenchidos automaticamente pela aplicação conforme o tipo de arquivo selecionado.
+Se estiver editando manualmente, marque os serviços necessários para a operação.
+No "caso geral" pelo menos um serviço tem que estar marcado.
+
+5. Número de Strings
+STRNO = "03" (padrão). Normalmente ajustado automaticamente para o padrão BNO.
+Valor aceito: 01 até 10.
+
+6. Campos Gerados
+O nome do registro e o nome do DSNAME serão preenchidos automaticamente conforme a seleção dos campos acima:
+Exemplo DSNAME: BPDBNOA.DI I001.G00000.AGE1234
+
+7. Validação
+Todos os campos obrigatórios validados pelo formulário antes de submeter.
+Caso falta algo (campo incompleto, valor fora das regras, serviço/arquivo não marcado, etc.), o sistema avisa e impede a gravação.
+Fluxo básico do preenchimento no padrão BNO:
+Marque “Padrão BNO” no tipo de requisição.
+Preencha o Código da Agência (4 dígitos, >0).
+Escolha ao menos 1 tipo de Arquivo Padrão.
+Verifique se ao menos 1 Serviço está marcado (ou observe o preenchimento automático).
+STRNO deve estar com "03" (ou ajuste se necessário, dentro do intervalo 01–10).
+Os campos Status/Formato geralmente já vêm preenchidos como "Enable"/"Fixed".
+Submeta a solicitação.
+
+
+__________________________________________________________________
+
+
+
+🔹 Remoto (monta_reg_remoto)
+Apenas inclui SYSIDNT.Text
+Ele exibe uma lista de Ambientes, no INI está com Sim e Não do lado
+**VAMOS MONTAR UMA TABELA ONDE O ADMIN PODE ALTERAR O SIM E O NÃO.
+
+
+Regras Condicionais e Fluxo
+
+🔹Se operação for Excluir, campos de entrada são ocultados
+🔹Se ambiente for diferente de "ACICS" e tipo for Padrão BNO, força tipo Local
+🔹Após confirmação (SIM), o registro é gravado e o formulário é resetado
+
+🔹Solicitação.APPLID.List é usado para popular SYSIDNT

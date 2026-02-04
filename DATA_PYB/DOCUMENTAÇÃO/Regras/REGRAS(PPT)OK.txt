@@ -1,0 +1,19 @@
+NOME DO PROGRAMA (TEXT)
+ - Deve começar com os 3 caracteres do sistema (CSS).
+ - Exemplo: se CSS = "SSP", então PROGRAM deve começar com "SSP".
+NOME DA LINK (TEXT)
+ - Deve começar com "BPDcss" ou ser "BPDPXS" ou "BPDPSWB.BLINK1.G00000.ODEII".
+ - Deve conter:
+	- ".BLKCI" ou ".BLINK"
+	- ".G00000"
+EX.:BPDPXY.BLKCI.G00000
+
+LINGUAGEM (ASSEMBLER, COBOL, C E PLI)
+TIPO (PROGRAMA, MAPA E TABELA)
+ESTADO INICIAL(ENABLE OU DISABLE)
+
+***************************************OPÇÕES PARA (PROGRAMA)***************************
+AUTO-ALTERAVEL(SIM/NÃO)
+ - Se marcada, é obrigatório justificar no campo
+ALOCAÇÃO DOS DADOS (ANY OU BELOW)
+ - Se a opção "Below" for selecionada, é obrigatório justificar no campo
