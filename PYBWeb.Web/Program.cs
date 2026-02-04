@@ -32,15 +32,17 @@ builder.Services.AddScoped<ColaboradorService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<SuporteService>();
 builder.Services.AddScoped<ICurrentUserService, UserService>();
+builder.Services.AddScoped<IFTPService, FtpService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
 builder.Services.AddScoped<IJclGeneratorService, JclGeneratorService>();
 
 // =====================================================================
 // ⚡ ADICIONAR INFRAESTRUTURA (DbContexts + Serviços) ⚡
 // =====================================================================
 builder.Services.AddInfrastructure(builder.Configuration);
+
+
 
 // Configurar logging
 builder.Services. AddLogging();
@@ -81,12 +83,6 @@ using (var scope = app.Services. CreateScope())
 }
 // -----------------------------------------------------
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
-}
 
 app.UseHttpsRedirection();
 
@@ -97,5 +93,7 @@ app.UseAntiforgery();
 app.UseStaticFiles();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+
 
 app.Run();

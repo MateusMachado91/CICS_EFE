@@ -1,0 +1,110 @@
+@page "/ftp-explorer"
+@rendermode InteractiveServer
+@using PYBWeb.Infrastructure.Services
+@inject ColaboradorService ColaboradorService
+@using Microsoft.AspNetCore.Components.Forms
+@using PYBWeb.Domain.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject IFTPService FtpService
+
+@attribute [Authorize(Policy = "RequireAdmin")]
+
+
+<PageTitle>FTP Explorer</PageTitle>
+<div class="container">
+    <h2>Navegador FTP do Mainframe</h2>
+    <EditForm Model="loginModel" OnValidSubmit="ConnectFtp">
+        <InputText @bind-Value="loginModel.Host" placeholder="Host (ex: 10.2.64.64)" class="form-control mb-1" />
+        <InputText @bind-Value="loginModel.User" placeholder="Usuário" class="form-control mb-1" />
+        <InputText @bind-Value="loginModel.Pass" placeholder="Senha" type="password" class="form-control mb-1" />
+        <InputText @bind-Value="loginModel.Dir" placeholder="Diretório (ex: 'E38235.' ou biblioteca)" class="form-control mb-1" />
+        <button class="btn btn-primary" type="submit">Conectar/Listar</button>
+    </EditForm>
+
+    @if (isLoading)
+    {
+        <div class="spinner-border text-primary" role="status"></div>
+    }
+
+    @if (!string.IsNullOrEmpty(ftpError))
+    {
+        <div class="alert alert-danger">@ftpError</div>
+    }
+    
+    @if (files != null && files.Any())
+    {
+        <h4>Pasta Remota: <span class="text-muted">@loginModel.Dir</span></h4>
+        <div class="mb-2">Itens encontrados: <strong>@files.Count</strong></div>
+        <input class="form-control mb-2" placeholder="Filtrar por nome..." @bind="filterText" @bind:event="oninput"/>
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Permissão</th>
+                    <th>Tamanho</th>
+                    <th>Modificado</th>
+                    <th>FullName</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in files)
+                {
+                    <tr>
+                        <td>@f.Name</td>
+                        <td>@f.Type</td>
+                        <td>@f.RawPermissions</td>
+                        <td>@f.Size</td>
+                        <td>@f.Modified</td>
+                        <td>@f.FullName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (files != null && !files.Any() && !isLoading && string.IsNullOrEmpty(ftpError))
+    {
+        <div class="alert alert-info">
+            Nenhum arquivo/membro encontrado neste diretório.<br />
+            <span class="text-muted">
+                Tente outros diretórios como o seu padrão (<b>'E38235.'</b>) ou uma biblioteca que tenha permissão.<br />
+                Dica: Em bibliotecas, os arquivos são chamados "membros".
+            </span>
+        </div>
+    }
+</div>
+
+@code {
+    private FtpLoginModel loginModel = new() { Dir = "'E38235.'" };
+    private List<FtpFile> files;
+    private bool isLoading = false;
+    private string ftpError;
+    private string filterText = "";
+    
+    private async Task ConnectFtp()
+    {
+        isLoading = true;
+        ftpError = "";
+        files = null;
+        try
+        {
+            files = await FtpService.ListDirectoryAsync(
+                loginModel.Host, loginModel.User, loginModel.Pass, loginModel.Dir
+            );
+        }
+        catch (Exception ex)
+        {
+            ftpError = ex.Message;
+            files = new List<FtpFile>();
+        }
+        isLoading = false;
+    }
+
+    public class FtpLoginModel {
+        public string Host { get; set; }
+        public string User { get; set; }
+        public string Pass { get; set; }
+        public string Dir { get; set; }
+    }
+}
+
