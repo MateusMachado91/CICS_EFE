@@ -1,10 +1,14 @@
 @page "/usuarios"
 @using PYBWeb.Infrastructure.Services
+@using Microsoft.AspNetCore.Authorization
 @inject ColaboradorService ColaboradorService
 @using Microsoft.AspNetCore.Components.Forms
 @using PYBWeb.Domain.Interfaces
 @inject ILogService LogService
+@inject ICurrentUserService CurrentUserService
 @rendermode InteractiveServer
+
+@attribute [Authorize(Policy = "RequireAdmin")]
 
 <PageTitle>Usuários PYB</PageTitle>
 
@@ -115,6 +119,9 @@
 </div>
 
 @code {
+    // ✅ ADICIONAR VARIÁVEL PARA ARMAZENAR O USUÁRIO
+    private string usuarioAtual = string.Empty;
+
     List<Colaborador>? usuarios;
     Colaborador usuarioEditando = new();
     bool editando = false;
@@ -122,6 +129,32 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // ✅ CAPTURA O USUÁRIO COM FALLBACK (IGUAL NA HOME)
+        usuarioAtual = CurrentUserService.UserName;
+        
+        if (string.IsNullOrWhiteSpace(usuarioAtual))
+        {
+            Console.WriteLine("[USUARIOS] Usuário vazio, tentando novamente...");
+            await Task.Delay(100);
+            usuarioAtual = CurrentUserService.UserName;
+        }
+        
+        if (string.IsNullOrWhiteSpace(usuarioAtual))
+        {
+            Console.WriteLine("[USUARIOS] Usuário ainda vazio, usando fallback");
+            try
+            {
+                var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                usuarioAtual = windowsIdentity?.Name?.Replace("CORP\\", "") ?? "SISTEMA";
+            }
+            catch
+            {
+                usuarioAtual = "SISTEMA";
+            }
+        }
+        
+        Console.WriteLine($"[USUARIOS] Usuário capturado: '{usuarioAtual}'");
+        
         await CarregarUsuarios();
     }
 
@@ -152,31 +185,30 @@
         novoUsuario = false;
     }
 
-    async Task SalvarUsuario()
-    {
-        if (string.IsNullOrWhiteSpace(usuarioEditando.Matricula)) return;
+async Task SalvarUsuario()
+{
+    if (string.IsNullOrWhiteSpace(usuarioEditando.Matricula)) return;
 
-        if (novoUsuario)
-            await ColaboradorService.AdicionarAsync(usuarioEditando);
-        else
-            await ColaboradorService.AtualizarAsync(usuarioEditando);
+    // ✅ PASSA O USUÁRIO ARMAZENADO
+    if (novoUsuario)
+        await ColaboradorService.AdicionarAsync(usuarioEditando, usuarioAtual);
+    else
+        await ColaboradorService.AtualizarAsync(usuarioEditando, usuarioAtual);
 
-        // REMOVIDO: chamada direta ao LogService para evitar duplicação.
-        editando = false;
-        usuarioEditando = new Colaborador();
-        await CarregarUsuarios();
-    }
+    editando = false;
+    usuarioEditando = new Colaborador();
+    await CarregarUsuarios();
+}
 
-    async Task RemoverUsuario(string matricula)
-    {
-        // pega dados antes de remover para incluir no log (se o serviço precisar)
-        var c = usuarios?.Find(x => x.Matricula == matricula);
-        await ColaboradorService.ExcluirAsync(matricula);
+async Task RemoverUsuario(string matricula)
+{
+    var c = usuarios?.Find(x => x.Matricula == matricula);
+    
+    // ✅ PASSA O USUÁRIO ARMAZENADO
+    await ColaboradorService.ExcluirAsync(matricula, usuarioAtual);
 
-        // REMOVIDO: chamada direta ao LogService para evitar duplicação.
-
-        await CarregarUsuarios();
-    }
+    await CarregarUsuarios();
+}
 
     void Cancelar()
     {

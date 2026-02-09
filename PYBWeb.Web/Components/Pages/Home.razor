@@ -304,6 +304,7 @@
 @code {
     // ⭐ MODO DEBUG
     private readonly bool DEBUG_MODE = true;
+    private string usuarioAtual = string.Empty;
 
     // ✅ Lista de selecionadas
     private List<SolicitacaoCics2025> solicitacoesSelecionadas = new();
@@ -321,8 +322,36 @@
     private bool exibirModalRecusa = false;
     private string motivoRecusa = "";
 
-    protected override async Task OnInitializedAsync()
+protected override async Task OnInitializedAsync()
     {
+        // ✅ CAPTURA O USUÁRIO COM FALLBACK
+        usuarioAtual = CurrentUserService.UserName;
+        
+        // ✅ SE AINDA ESTIVER VAZIO, TENTA DE NOVO
+        if (string.IsNullOrWhiteSpace(usuarioAtual))
+        {
+            Console.WriteLine("[INIT] Usuário vazio, tentando novamente...");
+            await Task.Delay(100); // Pequeno delay
+            usuarioAtual = CurrentUserService.UserName;
+        }
+        
+        // ✅ SE AINDA ESTIVER VAZIO, USA UM PADRÃO
+        if (string.IsNullOrWhiteSpace(usuarioAtual))
+        {
+            Console.WriteLine("[INIT] Usuário ainda vazio, usando fallback");
+            try
+            {
+                var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                usuarioAtual = windowsIdentity?.Name?.Replace("CORP\\", "") ?? "SISTEMA";
+            }
+            catch
+            {
+                usuarioAtual = "SISTEMA";
+            }
+        }
+        
+        Console.WriteLine($"[INIT] Usuário capturado: '{usuarioAtual}'");
+        
         ambientes = await AmbienteCicsService.ObterAmbientesAtivosAsync();
         await CarregarSolicitacoesPendentes();
     }
@@ -351,52 +380,7 @@
         }
     }
 
-    private async Task SelecionarSolicitacao(SolicitacaoCics2025 solicitacao)
-{
-    var jaSelecionada = solicitacoesSelecionadas.Any(s => s.Id == solicitacao.Id);
-
-    if (jaSelecionada)
-    {
-        // ✅ REMOVER da seleção
-        solicitacoesSelecionadas.RemoveAll(s => s.Id == solicitacao.Id);
-        
-        // Volta para Pendente se estava Em Análise
-        
-        StateHasChanged();
-        await CarregarSolicitacoesPendentes();
-        StateHasChanged();
-        return;
-    }
-
-    // ✅ ADICIONAR na seleção
-    // Validar compatibilidade antes de adicionar
-    if (solicitacoesSelecionadas.Any())
-    {
-        if (! ValidarCompatibilidadeAmbiente(solicitacao))
-        {
-            StateHasChanged();
-            return;
-        }
-    }
-
-    // Adicionar na seleção
-    solicitacoesSelecionadas.Add(solicitacao);
     
-    // Marca como Em Análise se estava Pendente
-    if (solicitacao.Status == "Pendente")
-    {
-        await AlterarStatusComLog(
-            solicitacao.Id, 
-            "Em Análise", 
-            "Solicitação selecionada para análise"
-        );
-    }
-
-    StateHasChanged();
-    await CarregarSolicitacoesPendentes();
-    StateHasChanged();
-}
-
     // ✅ Validação de compatibilidade (apenas MÁQUINA)
     private bool ValidarCompatibilidadeAmbiente(SolicitacaoCics2025 novaSolicitacao)
     {
@@ -469,57 +453,26 @@
         StateHasChanged();
     }
 
-    private async Task ConfirmarRecusaAsync()
-    {
-        if (! solicitacoesSelecionadas.Any() || string.IsNullOrWhiteSpace(motivoRecusa)) return;
-
-        try
-        {
-            foreach (var sol in solicitacoesSelecionadas)
-            {
-                await AlterarStatusComLog(
-                    sol.Id, 
-                    "Rejeitada", 
-                    $"Solicitação rejeitada.  Motivo: {motivoRecusa}",
-                    motivoRecusa
-                );
-            }
-
-            await JSRuntime.InvokeVoidAsync("alert", 
-                $"{solicitacoesSelecionadas. Count} solicitação(ões) recusada(s) com sucesso.");
-            
-            FecharModalRecusa();
-            await CarregarSolicitacoesPendentes();
-            solicitacoesSelecionadas.Clear();
-            
-            if (exibirTelaCobol)
-            {
-                VoltarParaLista();
-            }
-            
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console. WriteLine($"Erro ao recusar solicitações: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("alert", $"Erro ao recusar solicitações: {ex.Message}");
-        }
-    }
-
+    
     // ========== SUBMISSÃO DE JCL ==========
-    private async Task SubmeterJCLAsync()
+    
+
+private async Task SubmeterJCLAsync()
     {
+        // ✅ USA O USUÁRIO JÁ ARMAZENADO NO COMPONENTE
+        Console.WriteLine($"[SUBMETER] Usando usuário: '{usuarioAtual}'");
+        
         if (!solicitacoesSelecionadas.Any()) return;
 
         var ambiente = ambientes.FirstOrDefault(a => a.Id == solicitacoesSelecionadas.First().AmbienteId);
         if (ambiente == null) return;
 
-        string conteudoJcl = ! string.IsNullOrWhiteSpace(jclGerado) 
+        string conteudoJcl = !string.IsNullOrWhiteSpace(jclGerado) 
             ? jclGerado 
             : JclGenerator.GerarJclGrupo(solicitacoesSelecionadas, ambiente);
 
         var pastaBase = Path.Combine(AppContext.BaseDirectory, "..", "DATA_PYB");
-        var pastaJcl = Path. Combine(pastaBase, "JCL");
+        var pastaJcl = Path.Combine(pastaBase, "JCL");
         if (!Directory.Exists(pastaJcl))
             Directory.CreateDirectory(pastaJcl);
 
@@ -528,7 +481,7 @@
         
         File.WriteAllText(caminhoCompleto, conteudoJcl);
 
-        var caminhoRelativo = caminhoCompleto. Substring(pastaJcl.Length);
+        var caminhoRelativo = caminhoCompleto.Substring(pastaJcl.Length);
         if (!caminhoRelativo.StartsWith("\\"))
             caminhoRelativo = "\\" + caminhoRelativo;
 
@@ -549,6 +502,7 @@
             Console.WriteLine("╠════════════════════════════════════════════════════════════╣");
             Console.WriteLine($"║ Arquivo JCL: {nomeArquivo,-42} ║");
             Console.WriteLine($"║ Solicitações:  {solicitacoesSelecionadas.Count,-40} ║");
+            Console.WriteLine($"║ Usuário: {usuarioAtual,-48} ║");
             Console.WriteLine("║ ✅ JCL gerado e salvo com sucesso!                         ║");
             Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
         }
@@ -557,22 +511,25 @@
             (sucesso, mensagemJes, codigoRetorno, numeroJob) = JesSubmitter.SubmeterJCL(caminhoCompleto);
         }
 
+        // ✅ USA O USUÁRIO ARMAZENADO
         foreach (var item in solicitacoesSelecionadas)
         {
             await AlterarStatusComLog(
                 item.Id,
                 "Implementada",
                 DEBUG_MODE 
-                    ? $"[DEBUG] JCL:  {caminhoRelativo} | JOB: {numeroJob} | Status: {codigoRetorno}"
-                    : $"JCL: {caminhoRelativo} | JOB:  {numeroJob} | Status: {codigoRetorno}"
+                    ? $"[DEBUG] JCL: {caminhoRelativo} | JOB: {numeroJob} | Status: {codigoRetorno}"
+                    : $"JCL: {caminhoRelativo} | JOB: {numeroJob} | Status: {codigoRetorno}",
+                null,
+                usuarioAtual // ✅ PASSA O USUÁRIO ARMAZENADO
             );
         }
 
         var mensagemCompleta = DEBUG_MODE
-            ? $"🔧 MODO DEBUG\n\nArquivo: {nomeArquivo}\nSolicitações: {solicitacoesSelecionadas.Count}"
-            :  $"{mensagemJes}\n\nArquivo: {nomeArquivo}\nSolicitações: {solicitacoesSelecionadas.Count}";
+            ? $"🔧 MODO DEBUG\n\nArquivo: {nomeArquivo}\nSolicitações: {solicitacoesSelecionadas.Count}\nUsuário: {usuarioAtual}"
+            : $"{mensagemJes}\n\nArquivo: {nomeArquivo}\nSolicitações: {solicitacoesSelecionadas.Count}";
 
-        await JSRuntime. InvokeVoidAsync("alert", mensagemCompleta);
+        await JSRuntime.InvokeVoidAsync("alert", mensagemCompleta);
 
         await CarregarSolicitacoesPendentes();
         VoltarParaLista();
@@ -580,6 +537,84 @@
         StateHasChanged();
     }
 
+        private async Task SelecionarSolicitacao(SolicitacaoCics2025 solicitacao)
+    {
+        var jaSelecionada = solicitacoesSelecionadas.Any(s => s.Id == solicitacao.Id);
+
+        if (jaSelecionada)
+        {
+            solicitacoesSelecionadas.RemoveAll(s => s.Id == solicitacao.Id);
+            StateHasChanged();
+            await CarregarSolicitacoesPendentes();
+            StateHasChanged();
+            return;
+        }
+
+        if (solicitacoesSelecionadas.Any())
+        {
+            if (!ValidarCompatibilidadeAmbiente(solicitacao))
+            {
+                StateHasChanged();
+                return;
+            }
+        }
+
+        solicitacoesSelecionadas.Add(solicitacao);
+        
+        if (solicitacao.Status == "Pendente")
+        {
+            // ✅ USA O USUÁRIO ARMAZENADO
+            await AlterarStatusComLog(
+                solicitacao.Id, 
+                "Em Análise", 
+                "Solicitação selecionada para análise",
+                null,
+                usuarioAtual // ✅ PASSA O USUÁRIO ARMAZENADO
+            );
+        }
+
+        StateHasChanged();
+        await CarregarSolicitacoesPendentes();
+        StateHasChanged();
+    }
+    private async Task ConfirmarRecusaAsync()
+    {
+        if (!solicitacoesSelecionadas.Any() || string.IsNullOrWhiteSpace(motivoRecusa)) return;
+
+        try
+        {
+            foreach (var sol in solicitacoesSelecionadas)
+            {
+                // ✅ USA O USUÁRIO ARMAZENADO
+                await AlterarStatusComLog(
+                    sol.Id, 
+                    "Rejeitada", 
+                    $"Solicitação rejeitada. Motivo: {motivoRecusa}",
+                    motivoRecusa,
+                    usuarioAtual // ✅ PASSA O USUÁRIO ARMAZENADO
+                );
+            }
+
+            await JSRuntime.InvokeVoidAsync("alert", 
+                $"{solicitacoesSelecionadas.Count} solicitação(ões) recusada(s) com sucesso.");
+            
+            FecharModalRecusa();
+            await CarregarSolicitacoesPendentes();
+            solicitacoesSelecionadas.Clear();
+            
+            if (exibirTelaCobol)
+            {
+                VoltarParaLista();
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao recusar solicitações: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Erro ao recusar solicitações: {ex.Message}");
+        }
+    }
     private bool ExisteJustificativa()
     {
         return solicitacoesSelecionadas.Any(s => 
@@ -587,35 +622,48 @@
             !string. IsNullOrWhiteSpace(s.JustificativaBelow));
     }
 
-    private async Task AlterarStatusComLog(int solicitacaoId, string novoStatus, string detalhes, string?  observacoes = null)
-    {
-        var solicitacao = await SolicitacoesCics2025Service.ObterSolicitacaoPorIdAsync(solicitacaoId);
-        if (solicitacao == null) return;
+private async Task AlterarStatusComLog(
 
-        var statusAnterior = solicitacao.Status ??  "Pendente";
-        solicitacao.Status = novoStatus;
-        
-        if (!string.IsNullOrWhiteSpace(observacoes))
-            solicitacao.ObservacoesAdmin = observacoes;
-        
-        if (novoStatus == "Implementada" || novoStatus == "Rejeitada")
-        {
-            solicitacao.DataEfetivacao = DateTime.Now;
-            solicitacao.ResponsavelEfetivacao = CurrentUserService. UserName;
-        }
-        
-        await SolicitacoesCics2025Service.AtualizarSolicitacaoAsync(solicitacao);
-        
-        await LogService.RegistrarAsync(
-            acao: novoStatus,
-            tabela:  "SolicitacaoCics2025",
-            registroId: solicitacaoId,
-            registroIdentificador: solicitacao.NumeroSolicitacao,
-            detalhes: detalhes,
-            statusAnterior: statusAnterior,
-            statusNovo: novoStatus
-        );
+    
+
+    int solicitacaoId, 
+    string novoStatus, 
+    string detalhes, 
+    string? observacoes = null,
+    string? usuario = null) // ✅ ADICIONAR PARÂMETRO
+{
+    var solicitacao = await SolicitacoesCics2025Service.ObterSolicitacaoPorIdAsync(solicitacaoId);
+    if (solicitacao == null) return;
+
+    // ✅ USA O USUÁRIO PASSADO OU TENTA CAPTURAR
+    var usuarioFinal = usuario ?? CurrentUserService.UserName;
+
+    var statusAnterior = solicitacao.Status ?? "Pendente";
+    solicitacao.Status = novoStatus;
+    
+    if (!string.IsNullOrWhiteSpace(observacoes))
+        solicitacao.ObservacoesAdmin = observacoes;
+    
+    if (novoStatus == "Implementada" || novoStatus == "Rejeitada")
+    {
+        solicitacao.DataEfetivacao = DateTime.Now;
+        solicitacao.ResponsavelEfetivacao = usuarioFinal; // ✅ USA O USUÁRIO
     }
+    
+    await SolicitacoesCics2025Service.AtualizarSolicitacaoAsync(solicitacao);
+    
+    // ✅ PASSA O USUÁRIO EXPLICITAMENTE
+    await LogService.RegistrarAsync(
+        acao: novoStatus,
+        tabela: "SolicitacaoCics2025",
+        registroId: solicitacaoId,
+        registroIdentificador: solicitacao.NumeroSolicitacao,
+        detalhes: detalhes,
+        statusAnterior: statusAnterior,
+        statusNovo: novoStatus,
+        usuario: usuarioFinal // ✅ PASSA O USUÁRIO
+    );
+}
 
     private string GetBadgeClassOperacao(string operacao)
     {
