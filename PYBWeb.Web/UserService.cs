@@ -2,16 +2,21 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using PYBWeb.Domain.Interfaces;
 
 public class UserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IConfiguration _configuration;
 
-    public UserService(IHttpContextAccessor httpContextAccessor)
+    public UserService(IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
     {
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
+
+    private const string LAST_USER_ENV_VAR = "PYBWEB_LAST_AUTHENTICATED_USER";
 
     public string UserName
 {
@@ -22,24 +27,20 @@ public class UserService : ICurrentUserService
         var ctx = _httpContextAccessor.HttpContext;
         if (ctx == null)
         {
-            Console.WriteLine("[DEBUG] HttpContext é NULL - Tentando Windows Identity");
+            Console.WriteLine("[DEBUG] HttpContext é NULL - Rodando como Serviço");
             
-            // ✅ FALLBACK: Tentar obter do Windows Identity
-            try
+            // ✅ Tentar recuperar o último usuário autenticado da variável de ambiente
+            var lastUser = Environment.GetEnvironmentVariable(LAST_USER_ENV_VAR);
+            if (!string.IsNullOrEmpty(lastUser))
             {
-                var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
-                if (windowsIdentity != null)
-                {
-                    userName = windowsIdentity.Name;
-                    Console.WriteLine($"[DEBUG] Usuário Windows: {userName}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DEBUG] Erro ao obter Windows Identity: {ex.Message}");
+                Console.WriteLine($"[DEBUG] Último usuário autenticado recuperado: {lastUser}");
+                return RemoveDomainPrefix(lastUser);
             }
 
-            return RemoveDomainPrefix(userName ?? "SISTEMA");
+            // Se não houver último usuário salvo, usar valor padrão
+            var defaultServiceUser = _configuration["ServiceSettings:DefaultServiceUser"] ?? "SISTEMA";
+            Console.WriteLine($"[DEBUG] Nenhum usuário anterior. Usando padrão: {defaultServiceUser}");
+            return defaultServiceUser;
         }
 
         Console.WriteLine($"[DEBUG] HttpContext.User.Identity.IsAuthenticated: {ctx.User?.Identity?.IsAuthenticated}");
@@ -61,6 +62,20 @@ public class UserService : ICurrentUserService
                 Console.WriteLine($"[DEBUG] ClaimTypes.Name: '{claimName}'");
 
                 userName = upn ?? preferred ?? claimName;
+            }
+
+            // ✅ Salvar o usuário autenticado em uma variável de ambiente
+            if (!string.IsNullOrEmpty(userName))
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(LAST_USER_ENV_VAR, userName, EnvironmentVariableTarget.User);
+                    Console.WriteLine($"[DEBUG] Usuário '{userName}' salvo na variável de ambiente para uso futuro");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DEBUG] Erro ao salvar usuário em variável de ambiente: {ex.Message}");
+                }
             }
         }
         else
