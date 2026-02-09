@@ -12,7 +12,7 @@ public interface ILogService
     /// Registra uma modificação no sistema
     /// </summary>
     Task RegistrarAsync(string acao, string tabela, int? registroId, string? registroIdentificador,
-        string? detalhes = null, string? statusAnterior = null, string? statusNovo = null);
+        string? detalhes = null, string? statusAnterior = null, string? statusNovo = null, string? usuario = null);
 
     /// <summary>
     /// Obtém logs com filtros opcionais (versão com filtro por usuário)
