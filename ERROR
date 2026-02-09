@@ -1,6 +1,342 @@
-C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Web\Components\Pages\Home.razor(21,13): error RZ9980: Unclosed tag 'AuthenticationState' with no matching end tag. [C:\Users\E3823 
-5\Documents\teste\CICS_EFE-main\PYBWeb.Web\PYBWeb.Web.csproj]
-C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Web\Components\Pages\Home.razor(337,17): error CS0103: O nome "authenticationStateTask" não existe no contexto atual [C:\Users\E38 
-235\Documents\teste\CICS_EFE-main\PYBWeb.Web\PYBWeb.Web.csproj]
-C:\Users\E38235\Documents\teste\CICS_EFE-main\PYBWeb.Web\Components\Pages\Home.razor(339,35): error CS0103: O nome "authenticationStateTask" não existe no contexto atual [C:\Users\E38 
-235\Documents\teste\CICS_EFE-main\PYBWeb.Web\PYBWeb.Web.csproj]
+PS C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Web> dotnet watch run
+dotnet watch 🔥 Hot reload enabled. For a list of supported edits, see https://aka.ms/dotnet/hot-reload.
+  💡 Press "Ctrl + R" to restart.
+dotnet watch 🔧 Building...
+  Determining projects to restore...
+  Todos os projetos estão atualizados para restauração.
+  PYBWeb.Domain -> C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Domain\bin\Debug\net8.0\PYBWeb.Domain.dll
+  PYBWeb.Application -> C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Application\bin\Debug\net8.0\PYBWeb.Application.dll
+  PYBWeb.Infrastructure -> C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Infrastructure\bin\Debug\net8.0\PYBWeb.Infrastructure.dll
+  PYBWeb.Web -> C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Web\bin\Debug\net8.0\PYBWeb.Web.dll
+dotnet watch 🚀 Started
+═══════════════════════════════════════════════════════
+📁 Diretório Base:  C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Web\bin\Debug\net8.0\
+📁 Configuração PastaData: C:\Users\E38235\Documents\DATA_PYB
+📁 Pasta DATA Resolvida: C:\Users\E38235\Documents\DATA_PYB
+📊 Dados2025 DB: Data Source=C:\Users\E38235\Documents\DATA_PYB\dados2025.db
+🌍 Ambiente DB: Data Source=C:\Users\E38235\Documents\DATA_PYB\ambiente.db
+👥 Colaboradores DB: Data Source=C:\Users\E38235\Documents\DATA_PYB\colaboradores.db
+📝 Logs DB: Data Source=C:\Users\E38235\Documents\DATA_PYB\LOG\logs.db
+═══════════════════════════════════════════════════════
+info: Program[0]
+      🔍 Verificando banco de logs...
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (13ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;
+info: Program[0]
+      ✅ Banco de logs OK.
+info: Program[0]
+      🔍 Verificando banco de colaboradores...
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;
+info: Program[0]
+      ✅ Banco de colaboradores OK.
+info: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[63]
+      User profile is available. Using 'C:\Users\E38235\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5251
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Web
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/ - - -
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: Microsoft.AspNetCore.Authorization.DefaultAuthorizationService[2]
+      Authorization failed. Fail() was explicitly called.
+info: Microsoft.AspNetCore.Authentication.Negotiate.NegotiateHandler[12]
+      AuthenticationScheme: Negotiate was challenged.
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/ - 401 0 - 55.5136ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/ - - -
+info: Microsoft.AspNetCore.Authentication.Negotiate.NegotiateHandler[1]
+      Incomplete Negotiate handshake, sending an additional 401 Negotiate challenge.
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/ - 401 0 - 15.6106ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/ - - -
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@__matricula_0='?' (Size = 6)], CommandType='Text', CommandTimeout='30']
+      SELECT "c"."Matricula", "c"."Email", "c"."Nome", "c"."Role", "c"."Setor"
+      FROM "Colaboradores" AS "c"
+      WHERE upper("c"."Matricula") = @__matricula_0
+      LIMIT 1
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint '/ (/)'
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: True
+[DEBUG] HttpContext.User.Identity.Name: 'CORP\E38235'
+[DEBUG] Identity.Name: 'CORP\E38235'
+[DEBUG] Usuário 'CORP\E38235' salvo na variável de ambiente para uso futuro
+[DEBUG] Valor final de userName: 'CORP\E38235'
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@__matricula_0='?' (Size = 6)], CommandType='Text', CommandTimeout='30']
+      SELECT "c"."Matricula", "c"."Email", "c"."Nome", "c"."Role", "c"."Setor"
+      FROM "Colaboradores" AS "c"
+      WHERE "c"."Matricula" = @__matricula_0
+      LIMIT 1
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      🔍 ObterTodasSolicitacoesAsync INICIADO
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📁 Banco de dados criado: False
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📋 Connection String: Data Source=C:\Users\E38235\Documents\DATA_PYB\dados2025.db
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📊 Encontradas 46 solicitações no SQLite
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260046: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260045: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260044: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260043: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260042: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260041: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260040: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260039: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260038: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260037: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260036: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260035: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260034: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260033: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260032: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260031: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260030: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260029: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260028: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260027: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260026: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260025: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260024: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260023: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260022: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260021: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260020: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260019: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260018: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260017: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260016: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260015: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260014: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260013: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260012: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260011: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260010: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260009: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260008: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260007: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260006: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260005: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260004: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260003: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260002: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260001: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      🔍 ObterTodasSolicitacoesAsync INICIADO
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📁 Banco de dados criado: False
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: True
+[DEBUG] HttpContext.User.Identity.Name: 'CORP\E38235'
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📋 Connection String: Data Source=C:\Users\E38235\Documents\DATA_PYB\dados2025.db
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+      📊 Encontradas 46 solicitações no SQLite
+[DEBUG] Identity.Name: 'CORP\E38235'
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260046: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260045: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260044: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260043: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260042: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260041: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260040: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260039: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260038: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260037: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260036: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260035: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260034: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260033: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260032: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260031: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260030: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260029: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260028: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260027: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260026: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260025: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260024: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260023: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260022: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260021: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260020: Rejeitada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260019: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260018: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260017: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260016: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260015: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260014: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260013: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260012: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260011: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260010: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260009: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260008: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260007: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260006: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260005: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260004: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260003: Em Análise
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260002: Implementada
+info: PYBWeb.Infrastructure.Services.SolicitacoesCics2025Service[0]
+        - CICS20260001: Em Análise
+[DEBUG] Usuário 'CORP\E38235' salvo na variável de ambiente para uso futuro
+[DEBUG] Valor final de userName: 'CORP\E38235'
+[INIT] Usuário capturado: 'CORP\E38235'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint '/ (/)'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/ - 200 - text/html;+charset=utf-8 1214.4348ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/PYBWeb.Web.styles.css - - -
+info: Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware[2]
+      Sending file. Request path: '/PYBWeb.Web.styles.css'. Physical path: 'C:\Users\E38235\OneDrive - Banrisul S.A\Área de Trabalho\CICS_EFE-main\PYBWeb.Web\obj\Debug\net8.0\scopedcss\bundle\PYBWeb.Web.styles.css'     
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/PYBWeb.Web.styles.css - 200 10793 text/css 12.0693ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/_framework/blazor.web.js - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Blazor web static files'
+info: Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware[6]
+      The file /_framework/blazor.web.js was not modified
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Blazor web static files'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/_framework/blazor.web.js - 304 - text/javascript 3.0615ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/_framework/aspnetcore-browser-refresh.js - - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/_framework/aspnetcore-browser-refresh.js - 200 13732 application/javascript;+charset=utf-8 1.4495ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/_blazor/initializers - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:5251/_blazor/initializers - 200 - application/json;+charset=utf-8 3.6684ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 POST http://localhost:5251/_blazor/negotiate?negotiateVersion=1 - - 0
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 POST http://localhost:5251/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 7.6134ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:5251/_blazor?id=0jYq3sS47FLW0y4ADLLGxg - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado.
+[DEBUG] Valor final de userName: ''
+[INIT] Usuário vazio, tentando novamente...
+[DEBUG] HttpContext.User.Identity.IsAuthenticated: False
+[DEBUG] HttpContext.User.Identity.Name: ''
+[DEBUG] Usuário NÃO autenticado.
+[DEBUG] Valor final de userName: ''
+[INIT] Usuário ainda vazio, usando fallback
+[INIT] Usuário capturado: 'E38235'
