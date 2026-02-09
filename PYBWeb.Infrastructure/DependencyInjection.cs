@@ -79,14 +79,13 @@ public static class DependencyInjection
         // =====================================================================
         // 📦 REGISTRO DOS DbContexts
         // =====================================================================
-        
+                // Registro do DbContext de Logs
+        services.AddDbContext<LogDbContext>(options =>
+            options. UseSqlite(logsConnectionString));
+            
         // Registro do DbContext de Colaboradores
         services.AddDbContext<ColaboradoresDbContext>(options =>
             options. UseSqlite(colaboradoresConnectionString));
-
-        // Registro do DbContext de Logs
-        services.AddDbContext<LogDbContext>(options =>
-            options. UseSqlite(logsConnectionString));
 
         // =====================================================================
         // 📦 REGISTRO DOS SERVIÇOS (DEPOIS das connection strings!)

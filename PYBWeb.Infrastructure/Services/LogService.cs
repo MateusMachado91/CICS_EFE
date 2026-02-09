@@ -123,34 +123,44 @@ namespace PYBWeb.Infrastructure.Services
             return Path.GetFullPath(pastaAntigos);
         }
 
-        public async Task RegistrarAsync(string acao, string tabela, int? registroId, string? registroIdentificador,
-            string? detalhes = null, string? statusAnterior = null, string? statusNovo = null)
+public async Task RegistrarAsync(
+    string acao, 
+    string tabela, 
+    int? registroId, 
+    string? registroIdentificador,
+    string? detalhes = null, 
+    string? statusAnterior = null, 
+    string? statusNovo = null,
+    string? usuario = null) // ✅ ADICIONAR
+{
+    try
+    {
+        // ✅ SE USUÁRIO FOR PASSADO, USA ELE. SE NÃO, TENTA OBTER DO CONTEXTO
+        var usuarioFinal = string.IsNullOrWhiteSpace(usuario) 
+            ? _currentUserService.GetCurrentUser() 
+            : usuario;
+
+        var log = new LogModificacao
         {
-            try
-            {
-                var log = new LogModificacao
-                {
-                    DataHora = DateTime.Now,
-                    Usuario = _currentUserService.GetCurrentUser(),
-                    Acao = acao,
-                    Tabela = tabela,
-                    RegistroId = registroId,
-                    RegistroIdentificador = registroIdentificador,
-                    Detalhes = detalhes,
-                    StatusAnterior = statusAnterior,
-                    StatusNovo = statusNovo
-                };
+            DataHora = DateTime.Now,
+            Usuario = usuarioFinal,
+            Acao = acao,
+            Tabela = tabela,
+            RegistroId = registroId,
+            RegistroIdentificador = registroIdentificador,
+            Detalhes = detalhes,
+            StatusAnterior = statusAnterior,
+            StatusNovo = statusNovo
+        };
 
-                _context.Logs.Add(log);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // fallback: escreve no console caso falhe
-                Console.WriteLine($"Erro ao registrar log: {ex.Message}");
-            }
-        }
-
+        _context.Logs.Add(log);
+        await _context.SaveChangesAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Erro ao registrar log: {ex.Message}");
+    }
+}
         // Implementação principal com filtro por usuário (opcional)
         public async Task<List<LogModificacao>> ObterLogsAsync(DateTime? dataInicio = null, DateTime? dataFim = null,
             string? usuario = null, string? acao = null, string? tabela = null)

@@ -11,16 +11,20 @@ public class ColaboradorService
 {
     private readonly ColaboradoresDbContext _context;
     private readonly ILogService _logService;
+    private readonly ICurrentUserService _currentUserService; // ✅ ADICIONAR
 
-    public ColaboradorService(ColaboradoresDbContext context, ILogService logService)
+    public ColaboradorService(
+        ColaboradoresDbContext context, 
+        ILogService logService,
+        ICurrentUserService currentUserService) // ✅ ADICIONAR
     {
         _context = context;
         _logService = logService;
+        _currentUserService = currentUserService; // ✅ ADICIONAR
     }
 
     public async Task<List<Colaborador>> ObterTodosAsync()
     {
-        // Não rastrear a lista de resultados evita conflitos de tracking em operações subsequentes
         return await _context.Colaboradores
                              .AsNoTracking()
                              .OrderBy(c => c.Nome)
@@ -32,93 +36,109 @@ public class ColaboradorService
         return await _context.Colaboradores.FindAsync(matricula);
     }
 
-    public async Task AdicionarAsync(Colaborador colaborador)
-    {
-        if (colaborador == null) throw new ArgumentNullException(nameof(colaborador));
+    public async Task AdicionarAsync(Colaborador colaborador, string? usuario = null)
+{
+    if (colaborador == null) throw new ArgumentNullException(nameof(colaborador));
 
-        _context.Colaboradores.Add(colaborador);
+    // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER (COM FALLBACK)
+    var usuarioAtual = usuario ?? ObterUsuarioComFallback();
+
+    _context.Colaboradores.Add(colaborador);
+    await _context.SaveChangesAsync();
+
+    try
+    {
+        await _logService.RegistrarAsync(
+            acao: "CRIAR",
+            tabela: "Colaborador",
+            registroId: null,
+            registroIdentificador: colaborador.Matricula,
+            detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}",
+            usuario: usuarioAtual
+        );
+    }
+    catch (Exception) { }
+}
+
+public async Task AtualizarAsync(Colaborador colaborador, string? usuario = null)
+{
+    if (colaborador == null) throw new ArgumentNullException(nameof(colaborador));
+
+    // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER (COM FALLBACK)
+    var usuarioAtual = usuario ?? ObterUsuarioComFallback();
+
+    var existente = await _context.Colaboradores.FindAsync(colaborador.Matricula);
+
+    if (existente == null)
+    {
+        await AdicionarAsync(colaborador, usuarioAtual);
+        return;
+    }
+
+    _context.Entry(existente).CurrentValues.SetValues(colaborador);
+    await _context.SaveChangesAsync();
+
+    try
+    {
+        await _logService.RegistrarAsync(
+            acao: "EDITAR",
+            tabela: "Colaborador",
+            registroId: null,
+            registroIdentificador: colaborador.Matricula,
+            detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}",
+            usuario: usuarioAtual
+        );
+    }
+    catch (Exception) { }
+}
+
+public async Task ExcluirAsync(string matricula, string? usuario = null)
+{
+    var colaborador = await _context.Colaboradores.FindAsync(matricula);
+    if (colaborador != null)
+    {
+        // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER (COM FALLBACK)
+        var usuarioAtual = usuario ?? ObterUsuarioComFallback();
+        var detalhes = $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}";
+
+        _context.Colaboradores.Remove(colaborador);
         await _context.SaveChangesAsync();
 
-        // registra log de criação (não propaga exceção de log)
         try
         {
             await _logService.RegistrarAsync(
-                acao: "CRIAR",
+                acao: "EXCLUIR",
                 tabela: "Colaborador",
                 registroId: null,
-                registroIdentificador: colaborador.Matricula,
-                detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}"
+                registroIdentificador: matricula,
+                detalhes: detalhes,
+                usuario: usuarioAtual
             );
         }
-        catch (Exception)
-        {
-            // ignorar falha no log para não quebrar fluxo
-        }
+        catch (Exception) { }
     }
+}
 
-    public async Task AtualizarAsync(Colaborador colaborador)
+// ✅ MÉTODO AUXILIAR PARA OBTER USUÁRIO COM FALLBACK
+private string ObterUsuarioComFallback()
+{
+    var usuario = _currentUserService.GetCurrentUser();
+    
+    if (string.IsNullOrWhiteSpace(usuario))
     {
-        if (colaborador == null) throw new ArgumentNullException(nameof(colaborador));
-
-        // Carrega a entidade já rastreada (se existir) e aplica os valores,
-        // evitando anexar uma segunda instância com a mesma chave.
-        var existente = await _context.Colaboradores.FindAsync(colaborador.Matricula);
-
-        if (existente == null)
-        {
-            // Se não existir, tratar como criação (alternativa: lançar erro)
-            await AdicionarAsync(colaborador);
-            return;
-        }
-
-        // Atualiza propriedades escalares do objeto rastreado.
-        // Atenção: navegações/coleções devem ser tratadas separadamente, se necessário.
-        _context.Entry(existente).CurrentValues.SetValues(colaborador);
-
-        await _context.SaveChangesAsync();
-
         try
         {
-            await _logService.RegistrarAsync(
-                acao: "EDITAR",
-                tabela: "Colaborador",
-                registroId: null,
-                registroIdentificador: colaborador.Matricula,
-                detalhes: $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}"
-            );
+            var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
+            usuario = windowsIdentity?.Name?.Replace("CORP\\", "") ?? "SISTEMA";
         }
-        catch (Exception)
+        catch
         {
+            usuario = "SISTEMA";
         }
     }
-
-    public async Task ExcluirAsync(string matricula)
-    {
-        var colaborador = await _context.Colaboradores.FindAsync(matricula);
-        if (colaborador != null)
-        {
-            // guarda dados para o log antes de remover
-            var detalhes = $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}";
-
-            _context.Colaboradores.Remove(colaborador);
-            await _context.SaveChangesAsync();
-
-            try
-            {
-                await _logService.RegistrarAsync(
-                    acao: "EXCLUIR",
-                    tabela: "Colaborador",
-                    registroId: null,
-                    registroIdentificador: colaborador.Matricula,
-                    detalhes: detalhes
-                );
-            }
-            catch (Exception)
-            {
-            }
-        }
-    }
-
+    
+    return usuario;
+}
     public string ObterNomePorMatricula(string matricula)
     {
         var colaborador = _context.Colaboradores.FirstOrDefault(c => c.Matricula == matricula);

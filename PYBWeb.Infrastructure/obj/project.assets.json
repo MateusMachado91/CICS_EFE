@@ -47,19 +47,6 @@
           }
         }
       },
-      "FluentFTP/38.0.0": {
-        "type": "package",
-        "compile": {
-          "lib/net6.0/FluentFTP.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net6.0/FluentFTP.dll": {
-            "related": ".xml"
-          }
-        }
-      },
       "Humanizer.Core/2.14.1": {
         "type": "package",
         "compile": {
@@ -2009,39 +1996,6 @@
         "azureicon.png",
         "lib/netstandard2.0/Azure.Identity.dll",
         "lib/netstandard2.0/Azure.Identity.xml"
-      ]
-    },
-    "FluentFTP/38.0.0": {
-      "sha512": "o75+iV3/je0d+kwVWtmfo7rtG1tu02DoYD4w2g57vEJX6ovTsaThih8e+7DYaYr+5RkZJ30qJSAGkYZhCUQu+w==",
-      "type": "package",
-      "path": "fluentftp/38.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE.TXT",
-        "fluentftp.38.0.0.nupkg.sha512",
-        "fluentftp.nuspec",
-        "lib/net20/FluentFTP.dll",
-        "lib/net20/FluentFTP.xml",
-        "lib/net35/FluentFTP.dll",
-        "lib/net35/FluentFTP.xml",
-        "lib/net40/FluentFTP.dll",
-        "lib/net40/FluentFTP.xml",
-        "lib/net45/FluentFTP.dll",
-        "lib/net45/FluentFTP.xml",
-        "lib/net5.0/FluentFTP.dll",
-        "lib/net5.0/FluentFTP.xml",
-        "lib/net6.0/FluentFTP.dll",
-        "lib/net6.0/FluentFTP.xml",
-        "lib/netstandard1.4/FluentFTP.dll",
-        "lib/netstandard1.4/FluentFTP.xml",
-        "lib/netstandard1.6/FluentFTP.dll",
-        "lib/netstandard1.6/FluentFTP.xml",
-        "lib/netstandard2.0/FluentFTP.dll",
-        "lib/netstandard2.0/FluentFTP.xml",
-        "lib/netstandard2.1/FluentFTP.dll",
-        "lib/netstandard2.1/FluentFTP.xml",
-        "logo-nuget.png"
       ]
     },
     "Humanizer.Core/2.14.1": {
@@ -4915,7 +4869,6 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "FluentFTP >= 38.0.0",
       "Microsoft.EntityFrameworkCore >= 8.0.10",
       "Microsoft.EntityFrameworkCore.SqlServer >= 8.0.10",
       "Microsoft.EntityFrameworkCore.Sqlite >= 8.0.10",
@@ -4972,10 +4925,6 @@
       "net8.0": {
         "targetAlias": "net8.0",
         "dependencies": {
-          "FluentFTP": {
-            "target": "Package",
-            "version": "[38.0.0, )"
-          },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",
             "version": "[8.0.10, )"
