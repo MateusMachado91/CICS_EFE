@@ -40,8 +40,10 @@ public class ColaboradorService
 {
     if (colaborador == null) throw new ArgumentNullException(nameof(colaborador));
 
-    // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER (COM FALLBACK)
-    var usuarioAtual = usuario ?? ObterUsuarioComFallback();
+    // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER DO SERVIÇO
+    var usuarioAtual = !string.IsNullOrWhiteSpace(usuario) 
+        ? usuario 
+        : (_currentUserService.GetCurrentUser() ?? "SISTEMA");
 
     _context.Colaboradores.Add(colaborador);
     await _context.SaveChangesAsync();
@@ -64,8 +66,10 @@ public async Task AtualizarAsync(Colaborador colaborador, string? usuario = null
 {
     if (colaborador == null) throw new ArgumentNullException(nameof(colaborador));
 
-    // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER (COM FALLBACK)
-    var usuarioAtual = usuario ?? ObterUsuarioComFallback();
+    // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER DO SERVIÇO
+    var usuarioAtual = !string.IsNullOrWhiteSpace(usuario) 
+        ? usuario 
+        : (_currentUserService.GetCurrentUser() ?? "SISTEMA");
 
     var existente = await _context.Colaboradores.FindAsync(colaborador.Matricula);
 
@@ -97,8 +101,10 @@ public async Task ExcluirAsync(string matricula, string? usuario = null)
     var colaborador = await _context.Colaboradores.FindAsync(matricula);
     if (colaborador != null)
     {
-        // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER (COM FALLBACK)
-        var usuarioAtual = usuario ?? ObterUsuarioComFallback();
+        // ✅ USA O USUÁRIO PASSADO OU TENTA OBTER DO SERVIÇO
+        var usuarioAtual = !string.IsNullOrWhiteSpace(usuario) 
+            ? usuario 
+            : (_currentUserService.GetCurrentUser() ?? "SISTEMA");
         var detalhes = $"Nome={colaborador.Nome};Email={colaborador.Email};Setor={colaborador.Setor}";
 
         _context.Colaboradores.Remove(colaborador);
@@ -119,26 +125,6 @@ public async Task ExcluirAsync(string matricula, string? usuario = null)
     }
 }
 
-// ✅ MÉTODO AUXILIAR PARA OBTER USUÁRIO COM FALLBACK
-private string ObterUsuarioComFallback()
-{
-    var usuario = _currentUserService.GetCurrentUser();
-    
-    if (string.IsNullOrWhiteSpace(usuario))
-    {
-        try
-        {
-            var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
-            usuario = windowsIdentity?.Name?.Replace("CORP\\", "") ?? "SISTEMA";
-        }
-        catch
-        {
-            usuario = "SISTEMA";
-        }
-    }
-    
-    return usuario;
-}
     public string ObterNomePorMatricula(string matricula)
     {
         var colaborador = _context.Colaboradores.FirstOrDefault(c => c.Matricula == matricula);
