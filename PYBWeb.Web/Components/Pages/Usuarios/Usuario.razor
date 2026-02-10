@@ -129,7 +129,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // ✅ CAPTURA O USUÁRIO COM FALLBACK (IGUAL NA HOME)
+        // ✅ CAPTURA O USUÁRIO
         usuarioAtual = CurrentUserService.UserName;
         
         if (string.IsNullOrWhiteSpace(usuarioAtual))
@@ -141,16 +141,8 @@
         
         if (string.IsNullOrWhiteSpace(usuarioAtual))
         {
-            Console.WriteLine("[USUARIOS] Usuário ainda vazio, usando fallback");
-            try
-            {
-                var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
-                usuarioAtual = windowsIdentity?.Name?.Replace("CORP\\", "") ?? "SISTEMA";
-            }
-            catch
-            {
-                usuarioAtual = "SISTEMA";
-            }
+            Console.WriteLine("[USUARIOS] Usuário ainda vazio, usando 'SISTEMA'");
+            usuarioAtual = "SISTEMA";
         }
         
         Console.WriteLine($"[USUARIOS] Usuário capturado: '{usuarioAtual}'");

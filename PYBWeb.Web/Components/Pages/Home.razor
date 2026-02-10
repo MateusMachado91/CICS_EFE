@@ -338,16 +338,8 @@ protected override async Task OnInitializedAsync()
         // ✅ SE AINDA ESTIVER VAZIO, USA UM PADRÃO
         if (string.IsNullOrWhiteSpace(usuarioAtual))
         {
-            Console.WriteLine("[INIT] Usuário ainda vazio, usando fallback");
-            try
-            {
-                var windowsIdentity = System.Security.Principal.WindowsIdentity.GetCurrent();
-                usuarioAtual = windowsIdentity?.Name?.Replace("CORP\\", "") ?? "SISTEMA";
-            }
-            catch
-            {
-                usuarioAtual = "SISTEMA";
-            }
+            Console.WriteLine("[INIT] Usuário ainda vazio, usando 'SISTEMA'");
+            usuarioAtual = "SISTEMA";
         }
         
         Console.WriteLine($"[INIT] Usuário capturado: '{usuarioAtual}'");
