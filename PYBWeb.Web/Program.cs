@@ -20,22 +20,39 @@ builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    options. AddPolicy("RequireAdmin", policy =>
+    options.AddPolicy("RequireAdmin", policy =>
         policy.Requirements.Add(new AdminRequirement()));
 });
 
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, AdminAuthorizationHandler>();
 
+// 🔐 Serviços de Autenticação Blazor
+builder.Services.AddSingleton<IBlazorAuthenticationService, BlazorAuthenticationService>();
+
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<ICurrentUserService, UserService>();
+builder.Services.AddScoped<ICurrentUserService>(sp => 
+    new UserService(
+        sp.GetRequiredService<IHttpContextAccessor>(),
+        sp.GetRequiredService<IConfiguration>(),
+        sp.GetRequiredService<IBlazorAuthenticationService>()
+    ));
+
 builder.Services.AddInfrastructure(builder.Configuration); 
 builder.Services.AddScoped<ColaboradorService>();
 builder.Services.AddScoped<SuporteService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// ⚡ Registrar CircuitHandler para capturar autenticação no WebSocket
+builder.Services.AddScoped<AuthenticationCircuitHandler>();
 builder.Services.AddScoped<IJclGeneratorService, JclGeneratorService>();
 
 // =====================================================================
@@ -91,8 +108,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🔐 Middleware de Preservação de Autenticação para WebSocket
+app.UseMiddleware<AuthenticationPreservationMiddleware>();
 
 app.UseAntiforgery();
 app.UseStaticFiles();
